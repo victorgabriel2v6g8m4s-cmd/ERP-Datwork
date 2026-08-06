@@ -1,15 +1,15 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { AppointmentCard } from './AppointmentCard.tsx';
-import { type Appointment } from '../../../types/appointment.ts';
-import { Sparkles } from 'lucide-react';
+import { AppointmentListEmpty } from './AppointmentListEmpty.tsx'; // ✨ Importado
+import { type Appointment } from '../../../../types/appointment.ts';
 
 interface AppointmentListProps {
   appointments: Appointment[];
   onDragEnd: (result: any) => void;
   onSwipeRight: (id: string) => void;
   onSwipeLeft: (appointment: Appointment) => void;
-  onLongPress: (appointment: Appointment) => void; // ✨ Recebe o Toque Longo do App
-  onClick: (appointment: Appointment) => void;     // ✨ Recebe o Clique Simples do App
+  onLongPress: (appointment: Appointment) => void;
+  onClick: (appointment: Appointment) => void;
   onUpdateSubStatus: (id: string, nextSub: string) => void;
 }
 
@@ -29,13 +29,11 @@ export function AppointmentList({
           <div
             {...provided.droppableProps}
             ref={provided.innerRef}
-            className="w-full px-6 mx-auto min-h-[200px]"
+            /* ✨ CORREÇÃO CRÍTICA: Removido o px-6 duplicado para liberar largura útil ao gesto de Swipe */
+            className="w-full mx-auto min-h-[220px] pb-4 space-y-1"
           >
             {appointments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-400 bg-white border border-dashed border-slate-200 rounded-2xl">
-                <Sparkles className="w-8 h-8 text-indigo-400 mb-2 animate-pulse" />
-                <p className="text-sm font-medium">Nenhum agendamento.</p>
-              </div>
+              <AppointmentListEmpty />
             ) : (
               appointments.map((item, index) => (
                 <AppointmentCard
@@ -43,7 +41,7 @@ export function AppointmentList({
                   appointment={item}
                   index={index}
                   onSwipeRight={onSwipeRight}
-                  onSwipeLeft={onSwipeLeft} // Passa a função atualizada
+                  onSwipeLeft={onSwipeLeft}
                   onLongPress={onLongPress}
                   onClick={onClick}
                   onUpdateSubStatus={onUpdateSubStatus}

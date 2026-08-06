@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api/client.ts';
+import { CustomLogger } from '../utils/CustomLogger.ts';
 
 interface GridGesturesOptions<T> {
     endpoint: string;                      // Rota base do Node (Ex: '/appointments', '/products')
@@ -8,17 +9,17 @@ interface GridGesturesOptions<T> {
     onRefresh: () => Promise<void> | void; // Callback síncrono para recarregar a tela pós-gravação
 }
 
-export function useGridGestures<T extends { id: string; status: string; position?: number }>({
+export function useGridGestures<T extends { id: string; status: string; position?: number; subStatus?: string }>({
     endpoint,
     currentList,
     setListState,
     onRefresh
 }: GridGesturesOptions<T>) {
 
-    // ✨ Nome genérico e unificado para qualquer registro do ERP
+    // ✨ Nome genérico e unificado para qualquer registro do ERP (Inquilinato)
     const [activeItem, setActiveItem] = useState<T | null>(null);
 
-    // Gatilhos Universais de Modais compartilhados
+    // Gatilhos Universais de Modais compartilhados pelas grades
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -27,95 +28,103 @@ export function useGridGestures<T extends { id: string; status: string; position
     // 🧰 CATÁLOGO DE AÇÕES PRONTAS E SELADAS (AGNÓSTICAS)
     // ==========================================
 
-    // 🔃 AÇÃO A: Reordenação Mecânica Vertical por Arraste
+    // 🔃 AÇÃO A: Reordenação Mecânica Linear por Arraste (Otimizada para Lote /reorder)
     const handleDragEnd = async (result: any) => {
         const { destination, source } = result;
         if (!destination || destination.index === source.index) return;
+
+        CustomLogger.info(`[Grid Gestures] Reordenando lista no endpoint ${endpoint}. Origem: ${source.index} -> Destino: ${destination.index}`);
 
         const items = Array.from(currentList);
         const [removed] = items.splice(source.index, 1);
         items.splice(destination.index, 0, removed);
 
+        // Mapeia os novos índices lógicos
         const updatedList = currentList.map((item) => {
             const newIndex = items.findIndex((i) => i.id === item.id);
             if (newIndex !== -1) return { ...item, position: newIndex };
             return item;
         }).sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
 
+        // Feedback visual instantâneo na UI
         setListState(updatedList);
 
         try {
-            const savePromises = updatedList.map((item) =>
-                api.patch(`${endpoint}/${item.id}/order`, { position: item.position })
-            );
-            await Promise.all(savePromises);
-        } catch {
-            onRefresh();
+            // ✨ OTIMIZAÇÃO HISTÓRICA: Em vez de bombardear o SQLite com N patches individuais,
+            // enviamos o array consolidado em uma única requisição HTTP atômica para o endpoint /reorder
+            const positionsPayload = updatedList.map(item => ({ id: item.id, position: item.position }));
+
+            await api.patch(`${endpoint}/reorder`, { positions: positionsPayload });
+            CustomLogger.info(`[Grid Gestures] Ordenação em lote gravada com sucesso absoluto no backend.`);
+        } catch (error) {
+            CustomLogger.error(`[Grid Gestures] Falha ao persistir reordenação em lote no endpoint ${endpoint}. Revertendo...`, error);
+            onRefresh(); // Reverte o estado local buscando a verdade do banco
         }
     };
 
-    // 🧠 AÇÃO B: Máquina de Ciclo de Status Dinâmica (Aceita qualquer sequência de strings via parâmetro)
+    // 🧠 AÇÃO B: Máquina de Ciclo de Status Dinâmica (Swipe Right)
     const cycleStatus = async (itemOrId: T | string, sequence: string[] = ['PENDING', 'COMPLETED'], deleteStatus = 'CANCELED') => {
         const target = typeof itemOrId === 'string' ? currentList.find(i => i.id === itemOrId) : itemOrId;
         if (!target) return;
 
         let nextStatus = 'PENDING';
 
-        // ➡️ LÓGICA DO SWIPE RIGHT (DESLIZAR PARA A DIREITA):
-        if (target.status === 'PENDING' || target.status === 'SCHEDULED') {
-            nextStatus = 'COMPLETED'; // Avança agendamento para atendido
+        if (target.status === 'PENDING' || target.status === 'SCHEDULED' || target.status === 'ACTIVE') {
+            nextStatus = 'COMPLETED';
         } else if (target.status === 'COMPLETED') {
-            /* ✨ ADICIONADO: Se já estiver concluído e arrastar para a direita, desmarca e volta para PENDENTE */
             nextStatus = 'PENDING';
         } else if (target.status === deleteStatus || target.status === 'INACTIVE') {
-            nextStatus = 'PENDING'; // Reativa item cancelado jogando de volta para agendado
+            nextStatus = 'PENDING';
         } else {
             return;
         }
 
+        CustomLogger.info(`[Grid Gestures] Avançando status do item ${target.id} para: ${nextStatus}`);
         setListState(currentList.map(i => i.id === target.id ? { ...i, status: nextStatus } : i));
+
         try {
             await api.patch(`${endpoint}/${target.id}/status`, { status: nextStatus });
             onRefresh();
-        } catch { onRefresh(); }
-    };
-
-    // 🚨 AÇÃO C: Disparador de Popup de Confirmação para Soft-Delete / Cancelamento
-    const triggerSoftDelete = async (item: T) => {
-        // ⬅️ LÓGICA DO SWIPE LEFT (DESLIZAR PARA A ESQUERDA):
-        if (item.status === 'PENDING' || item.status === 'SCHEDULED' || item.status === 'ACTIVE') {
-            // Se está agendado e arrasta para a esquerda, aciona o popup para virar CANCELADO por segurança
-            setActiveItem(item);
-            setConfirmModalOpen(true);
-        } else if (item.status === 'COMPLETED') {
-            // Se já estava concluído e arrasta para a esquerda, desmarca o atendimento e volta para PENDENTE direto
-            setListState(currentList.map(i => i.id === item.id ? { ...i, status: 'PENDING' } : i));
-            try {
-                await api.patch(`${endpoint}/${item.id}/status`, { status: 'PENDING' });
-                onRefresh();
-            } catch { onRefresh(); }
-        } else if (item.status === 'CANCELED') {
-            // Se o item já está cancelado e arrasta para a esquerda, ele faz o fluxo inverso de descancelar
-            setListState(currentList.map(i => i.id === item.id ? { ...i, status: 'PENDING' } : i));
-            try {
-                await api.patch(`${endpoint}/${item.id}/status`, { status: 'PENDING' });
-                onRefresh();
-            } catch { onRefresh(); }
+        } catch (error) {
+            CustomLogger.error(`[Grid Gestures] Erro ao mutar status do item ${target.id}`, error);
+            onRefresh();
         }
     };
 
-    // 📝 AÇÃO D: Executador do Soft-Delete no Banco (Gatilho do botão "Confirmar" do modal)
+    // 🚨 AÇÃO C: Disparador de Popup de Confirmação para Soft-Delete / Cancelamento (Swipe Left)
+    const triggerSoftDelete = async (item: T) => {
+        if (item.status === 'PENDING' || item.status === 'SCHEDULED' || item.status === 'ACTIVE') {
+            setActiveItem(item);
+            setConfirmModalOpen(true);
+        } else if (item.status === 'COMPLETED' || item.status === 'CANCELED' || item.status === 'INACTIVE') {
+            CustomLogger.info(`[Grid Gestures] Executando fluxo inverso (Reativação direta) para o item ${item.id}`);
+            setListState(currentList.map(i => i.id === item.id ? { ...i, status: 'PENDING' } : i));
+            try {
+                await api.patch(`${endpoint}/${item.id}/status`, { status: 'PENDING' });
+                onRefresh();
+            } catch (error) {
+                CustomLogger.error(`[Grid Gestures] Falha ao reativar registro ${item.id}`, error);
+                onRefresh();
+            }
+        }
+    };
+
+    // 📝 AÇÃO D: Executador do Soft-Delete Seguro no Banco (Gatilho da confirmação do modal)
     const executeConfirmDelete = async (deleteStatusTarget = 'CANCELED') => {
         if (!activeItem) return;
         const { id } = activeItem;
 
+        CustomLogger.info(`[Grid Gestures] Confirmando Soft-Delete lógico para o registro ID: ${id}`);
         setListState(currentList.map(i => i.id === id ? { ...i, status: deleteStatusTarget } : i));
         setConfirmModalOpen(false);
 
         try {
-            await api.delete(`${endpoint}/${id}`);
+            // ✨ SEGURANÇA PATRIMONIAL: Mudança para patch de status de exclusão lógica (INACTIVE/CANCELED)
+            // Casando 100% com o Soft-Delete unificado e gerador de snapshots do backend
+            await api.patch(`${endpoint}/${id}/status`, { status: deleteStatusTarget });
             onRefresh();
-        } catch {
+        } catch (error) {
+            CustomLogger.error(`[Grid Gestures] Falha ao processar Soft-Delete lógico do item ${id}`, error);
             onRefresh();
         } finally {
             setActiveItem(null);
@@ -137,15 +146,17 @@ export function useGridGestures<T extends { id: string; status: string; position
         setViewModalOpen(true);
     };
 
+    // 🔮 AÇÃO G: Alteração instantânea de Sub-status com amortecedor de rede
     const updateSubStatus = async (id: string, nextSub: string) => {
-        // Altera na memória local imediatamente para ganho de feedback tátil e instantâneo
+        CustomLogger.info(`[Grid Gestures] Atualizando sub-status do item ${id} para: ${nextSub}`);
         setListState(currentList.map(item => item.id === id ? { ...item, subStatus: nextSub } : item));
 
         try {
             await api.patch(`${endpoint}/${id}/sub-status`, { subStatus: nextSub });
             onRefresh();
-        } catch {
-            onRefresh(); // Reverte em caso de falha de rede
+        } catch (error) {
+            CustomLogger.error(`[Grid Gestures] Falha ao sincronizar sub-status do item ${id}. Revertendo...`, error);
+            onRefresh();
         }
     };
 
@@ -155,7 +166,6 @@ export function useGridGestures<T extends { id: string; status: string; position
         editModalOpen, setEditModalOpen,
         viewModalOpen, setViewModalOpen,
 
-        // 🎁 COMPONENTES EXECUTORES PRONTOS ENVIADOS PARA A PÁGINA
         actions: {
             handleDragEnd,
             cycleStatus,
