@@ -1,0 +1,9 @@
+# Dependências gigantes que o Node baixa sozinho
+node_modules/
+dist/
+.env
+
+# Banco de dados local e mídias de teste
+*.db
+*.db-journal
+backend/uploads/

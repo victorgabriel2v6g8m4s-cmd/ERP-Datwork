@@ -1,0 +1,230 @@
+datasource db {
+  provider = "sqlite" // Pronto para migrar para postgresql mudando apenas esta linha
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 🧼 ENUMS PADRONIZADOS
+enum AppointmentStatus {
+  CANCELED
+  PENDING
+  SCHEDULED
+  COMPLETED
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AbcCategory {
+  A
+  B
+  C
+}
+
+enum CostInclusion {
+  YES
+  NO
+  DEFAULT
+}
+
+enum ValueType {
+  LITERAL
+  PERCENT
+}
+
+enum ExpenseCategory {
+  FIXED
+  VARIABLE
+}
+
+model Appointment {
+  id          String            @id @default(uuid())
+  title       String // Nome do Agendamento
+  time        String
+  position    Int
+  status      AppointmentStatus @default(PENDING) // ✨ Agora usa o Enum estrito
+  subStatus   String?
+  description String?
+  medias      Json? // ✨ Mudado para Json para melhor manipulação
+  financials  Json? // ✨ Mudado para Json
+
+  firstName      String?
+  lastName       String?
+  documentType   String? // Ex: CPF / RG
+  documentNumber String? // Ex: 123.456.789-00
+
+  phone String?
+  email String?
+
+  cep            String?
+  state          String?
+  city           String?
+  neighborhood   String?
+  street         String?
+  houseNumber    String?
+  complement     String?
+  referencePoint String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✨ Índice para buscas rápidas de agendamentos por status ou data
+  @@index([status, createdAt])
+  @@map("appointments")
+}
+
+model Product {
+  id          String        @id @default(uuid())
+  sku         String        @unique
+  name        String
+  brand       String?
+  variation   String?
+  description String?
+  status      ProductStatus @default(ACTIVE) // ✨ Enum
+  abcCategory AbcCategory   @default(C) // ✨ Enum
+
+  thumbnail String? // URL da foto de capa
+  medias    Json? // ✨ String JSON virou Json nativo do Prisma
+
+  recipeCostPerUnit Float @default(0)
+  indirectCost      Float @default(0)
+  totalUnitCost     Float @default(0)
+
+  suggestedPrice     Float         @default(0)
+  finalPrice         Float         @default(0)
+  predictedNetProfit Float         @default(0)
+  includeFixedCosts  CostInclusion @default(DEFAULT) // ✨ Enum
+
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe          Recipe?
+  productVersions ProductVersion[]
+
+  @@index([status, abcCategory])
+  @@map("products")
+}
+
+model ProductVersion {
+  id        String  @id @default(uuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  snapshotData Json // ✨ Mudado para Json
+  versionDate  DateTime @default(now())
+
+  // ✨ Índice na FK para otimizar o histórico de versões do produto
+  @@index([productId])
+  @@map("product_versions")
+}
+
+model CustomOrderProfile {
+  id        String   @id @default(uuid())
+  name      String
+  positions Json // ✨ Mudado para Json para evitar parse/stringify manual no Node
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("custom_order_profiles")
+}
+
+model Ingredient {
+  id          String              @id @default(uuid())
+  sku         String              @unique
+  name        String
+  price       Float
+  quantity    Float
+  unit        String
+  thumbnail   String?
+  medias      Json? // ✨ Mudado para Json
+  status      ProductStatus       @default(ACTIVE) // ✨ Reaproveitando o Enum de status
+  position    Int
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  versions    IngredientVersion[]
+  recipeItems RecipeItem[]
+
+  @@index([status])
+  @@map("ingredients")
+}
+
+model IngredientVersion {
+  id           String     @id @default(uuid())
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  snapshotData Json // ✨ Mudado para Json
+  versionDate  DateTime @default(now())
+
+  @@index([ingredientId])
+  @@map("ingredient_versions")
+}
+
+model Recipe {
+  id            String        @id @default(uuid())
+  productId     String        @unique
+  status        ProductStatus @default(ACTIVE) // ✨ Enum
+  position      Int
+  unitsPerBatch Int           @default(1)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  product Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  items   RecipeItem[]
+
+  @@map("recipes")
+}
+
+model RecipeItem {
+  id             String     @id @default(uuid())
+  recipeId       String
+  recipe         Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientId   String
+  ingredient     Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  quantityNeeded Float
+
+  // ✨ Índices nas FKs para acelerar o cálculo do custo da receita
+  @@index([recipeId])
+  @@index([ingredientId])
+  @@map("recipe_items")
+}
+
+model Expense {
+  id        String          @id @default(uuid())
+  name      String
+  value     Float
+  valueType ValueType // ✨ Enum
+  category  ExpenseCategory // ✨ Enum
+  status    ProductStatus   @default(ACTIVE) // ✨ Enum
+  position  Int
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([category, status])
+  @@map("expenses")
+}
+
+model ExpenseVersion {
+  id           String   @id @default(uuid())
+  snapshotData Json // ✨ Mudado para Json
+  versionDate  DateTime @default(now())
+
+  @@map("expense_versions")
+}
+
+model PricingSetting {
+  id               String   @id @default("GLOBAL_CONFIG")
+  maxProductionCap Float    @default(1000)
+  marginCategoryA  Float    @default(50)
+  marginCategoryB  Float    @default(30)
+  marginCategoryC  Float    @default(20)
+  updatedAt        DateTime @updatedAt
+  enableAutoABC    Boolean @default(false)
+
+  @@map("pricing_settings")
+}
