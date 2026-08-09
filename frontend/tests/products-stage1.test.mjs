@@ -54,11 +54,16 @@ test('parseProductOrderPositions rejects malformed, duplicate and unsafe positio
     assert.deepEqual(parseProductOrderPositions('{invalid-json'), []);
 });
 
-test('Products page and hooks do not bypass the service boundary', async () => {
+test('Products UI and orchestration do not bypass service boundaries', async () => {
     const files = [
         '../src/pages/Products/ProductsPage.tsx',
         '../src/pages/Products/hooks/useProductsActions.ts',
-        '../src/pages/Products/hooks/useProductsFilters.ts'
+        '../src/pages/Products/hooks/useProductsFilters.ts',
+        '../src/pages/Products/hooks/useProductForm.ts',
+        '../src/pages/Products/components/CreateProductModal.tsx',
+        '../src/pages/Products/components/EditProductModal.tsx',
+        '../src/pages/Products/components/ViewProductModal.tsx',
+        '../src/components/MediaManager.tsx'
     ];
 
     for (const relativePath of files) {

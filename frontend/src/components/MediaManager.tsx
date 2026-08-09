@@ -1,48 +1,52 @@
 import { Plus, X, FileText } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { api } from '../api/client.ts';
+import { type ChangeEvent } from 'react';
 import { type MediaItem } from '../types/appointment.ts';
+import { uploadMedia } from '../utils/uploadService.ts';
 
 interface MediaManagerProps {
   medias: MediaItem[];
   onChangeMedias: (updated: MediaItem[]) => void;
   onOpenLightbox: (media: MediaItem) => void;
+  uploadEndpoint?: string;
 }
 
-export function MediaManager({ medias, onChangeMedias, onOpenLightbox }: MediaManagerProps) {
-  
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const filesArray = Array.from(e.target.files);
+export function MediaManager({
+  medias,
+  onChangeMedias,
+  onOpenLightbox,
+  uploadEndpoint = '/appointments/upload'
+}: MediaManagerProps) {
+  const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    if (!input.files?.length) return;
 
-    for (const file of filesArray) {
-      const formData = new FormData();
-      formData.append('file', file);
+    const files = Array.from(input.files);
+    const uploadedMedias: MediaItem[] = [];
 
-      try {
-        const response = await api.post('/appointments/upload', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        // Adiciona a nova mídia retornada pelo backend com acentuação UTF-8 correta
-        onChangeMedias([...medias, response.data]);
-      } catch (error) {
-        console.error('🔥 Erro ao efetuar upload no gerenciador:', error);
-      }
+    for (const file of files) {
+      const media = await uploadMedia(file, uploadEndpoint);
+      if (media) uploadedMedias.push(media);
     }
+
+    if (uploadedMedias.length > 0) {
+      onChangeMedias([...medias, ...uploadedMedias]);
+    }
+
+    input.value = '';
   };
 
   const handleRemoveMedia = (id: string) => {
-    onChangeMedias(medias.filter((m) => m.id !== id));
+    onChangeMedias(medias.filter((media) => media.id !== id));
   };
 
   return (
     <div className="w-full space-y-3">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {medias.map((item) => (
-          <div 
-            key={item.id} 
+          <div
+            key={item.id}
             onClick={() => onOpenLightbox(item)}
-            className="relative group border border-slate-100 rounded-xl overflow-hidden aspect-video bg-slate-900 flex items-center justify-center shadow-3xs group relative cursor-pointer hover:ring-2 hover:ring-indigo-500/30 transition-all"
+            className="relative group border border-slate-100 rounded-xl overflow-hidden aspect-video bg-slate-900 flex items-center justify-center shadow-3xs cursor-pointer hover:ring-2 hover:ring-indigo-500/30 transition-all"
           >
             {item.type === 'image' ? (
               <img src={item.url} alt={item.name} className="object-cover w-full h-full" />
@@ -54,12 +58,11 @@ export function MediaManager({ medias, onChangeMedias, onOpenLightbox }: MediaMa
                 <span className="text-[10px] text-slate-600 font-semibold truncate w-full px-1">{item.name}</span>
               </div>
             )}
-            
-            {/* Botão de exclusão isolado */}
+
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation(); // Impede abrir o visualizador de tela cheia
+              onClick={(event) => {
+                event.stopPropagation();
                 handleRemoveMedia(item.id);
               }}
               className="absolute top-1 right-1 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md z-20"
@@ -68,8 +71,7 @@ export function MediaManager({ medias, onChangeMedias, onOpenLightbox }: MediaMa
             </button>
           </div>
         ))}
-        
-        {/* Caixa de arraste/clique de Upload nativa */}
+
         <label className="border-2 border-dashed border-slate-200 hover:border-indigo-500 rounded-xl aspect-video flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer bg-slate-50/50">
           <Plus className="w-5 h-5" />
           <span className="text-[10px] font-bold uppercase">Anexar Arquivo</span>

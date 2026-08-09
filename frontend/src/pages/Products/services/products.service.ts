@@ -1,6 +1,7 @@
 import { api } from '../../../api/client.ts';
 import { type Product } from '../../../types/product.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
+import { type ProductMutationPayload, type ProductVersion } from '../types/product-form.types.ts';
 
 export interface ProductOrderPosition {
     id: string;
@@ -80,20 +81,50 @@ function normalizeOrderProfile(profile: unknown): ProductOrderProfile | null {
     };
 }
 
+function normalizeProductVersion(version: unknown): ProductVersion | null {
+    if (!isRecord(version)) return null;
+
+    const id = typeof version.id === 'string' ? version.id.trim() : '';
+    const versionDate = typeof version.versionDate === 'string' ? version.versionDate : '';
+
+    if (!id || !versionDate || !('snapshotData' in version)) {
+        return null;
+    }
+
+    return {
+        id,
+        versionDate,
+        snapshotData: version.snapshotData
+    };
+}
+
 export const productsService = {
     async list(): Promise<Product[]> {
         const response = await api.get<Product[]>('/products');
         return response.data;
     },
 
-    async create(payload: unknown): Promise<Product> {
+    async create(payload: ProductMutationPayload): Promise<Product> {
         const response = await api.post<Product>('/products', payload);
         return response.data;
     },
 
-    async update(id: string, payload: unknown): Promise<Product> {
+    async update(id: string, payload: ProductMutationPayload): Promise<Product> {
         const response = await api.put<Product>(`/products/${id}`, payload);
         return response.data;
+    },
+
+    async listVersions(productId: string): Promise<ProductVersion[]> {
+        const response = await api.get<unknown>(`/products/${productId}/versions`);
+
+        if (!Array.isArray(response.data)) {
+            CustomLogger.warn(`[Products] Invalid version history response for product ${productId}`);
+            return [];
+        }
+
+        return response.data
+            .map(normalizeProductVersion)
+            .filter((version): version is ProductVersion => version !== null);
     },
 
     async listOrderProfiles(): Promise<ProductOrderProfile[]> {

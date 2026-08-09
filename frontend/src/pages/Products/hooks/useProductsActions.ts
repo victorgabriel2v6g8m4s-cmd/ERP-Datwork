@@ -7,6 +7,21 @@ import {
     type ProductOrderPosition,
     type ProductOrderProfile
 } from '../services/products.service.ts';
+import { type ProductMutationPayload } from '../types/product-form.types.ts';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function getProductApiErrorMessage(error: unknown, fallback: string): string {
+    if (!isRecord(error) || !isRecord(error.response) || !isRecord(error.response.data)) {
+        return fallback;
+    }
+
+    return typeof error.response.data.error === 'string'
+        ? error.response.data.error
+        : fallback;
+}
 
 export function useProductsActions() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -57,32 +72,31 @@ export function useProductsActions() {
         refreshAfterSoftDelete: false
     });
 
-    const handleCreateProduct = async (payload: unknown) => {
+    const handleCreateProduct = async (payload: ProductMutationPayload) => {
         CustomLogger.info('[Products] Creating product');
 
         try {
             const createdProduct = await productsService.create(payload);
-            setProducts((current) => [...current, createdProduct].sort((a, b) => a.position - b.position));
-            setIsCreateModalOpen(false);
             CustomLogger.info(`[Products] Product created successfully. ID: ${createdProduct.id}`);
-        } catch (error: any) {
+            await fetchProducts();
+        } catch (error) {
             CustomLogger.error('[Products] Failed to create product', error);
-            alert(`Erro: ${error.response?.data?.error || 'Falha ao salvar produto.'}`);
+            alert(`Erro: ${getProductApiErrorMessage(error, 'Falha ao salvar produto.')}`);
+            throw error;
         }
     };
 
-    const handleUpdateProduct = async (id: string, payload: unknown) => {
+    const handleUpdateProduct = async (id: string, payload: ProductMutationPayload) => {
         CustomLogger.info(`[Products] Updating product ${id}`);
 
         try {
-            const updatedProduct = await productsService.update(id, payload);
-            setProducts((current) => current.map((item) => item.id === id ? updatedProduct : item));
-            setIsEditModalOpen(false);
-            setSelectedProduct(null);
+            await productsService.update(id, payload);
             CustomLogger.info(`[Products] Product ${id} updated successfully`);
-        } catch (error: any) {
+            await fetchProducts();
+        } catch (error) {
             CustomLogger.error(`[Products] Failed to update product ${id}`, error);
-            alert(`Erro ao atualizar: ${error.response?.data?.error || 'Falha na rede.'}`);
+            alert(`Erro ao atualizar: ${getProductApiErrorMessage(error, 'Falha na rede.')}`);
+            throw error;
         }
     };
 

@@ -1,59 +1,83 @@
 import { type Request, type Response } from 'express';
-// 🌟 Acoplamento direto com a instância centralizadora de serviços do módulo de produtos e enums
 import { productService } from '../../../services/product/ProductServiceHandler.js';
-import { AbcCategory, CostInclusion } from '@prisma/client';
+import { type UpdateProductRequest } from '../../../services/product/modules/UpdateProductService.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import {
+  ProductRequestValidationError,
+  parseOptionalAbcCategory,
+  parseOptionalCostInclusion,
+  parseOptionalNonEmptyString,
+  parseOptionalNonNegativeNumber,
+  parseOptionalNullableString,
+  parseOptionalProductMedias
+} from '../utils/ProductRequestValidator.js';
 
 export class UpdateProductController {
   async handle(req: Request, res: Response): Promise<Response> {
     const { id } = req.params;
-
-    CustomLogger.info(`Recebendo requisição HTTP para atualização completa do produto ID: ${id}`);
-
-    // Captura as chaves financeiras e de mídias atualizadas do corpo
-    const { sku, name, brand, variation, description, thumbnail, medias, indirectCost, abcCategory, includeFixedCosts, finalPrice } = req.body;
 
     if (!id || typeof id !== 'string') {
       CustomLogger.warn('Requisição de atualização rejeitada: parâmetro ID ausente ou inválido');
       return res.status(400).json({ error: 'O identificador único ID do produto é obrigatório.' });
     }
 
-    try {
-      // 🛠️ Monta o payload dinamicamente para respeitar a regra rígida exactOptionalPropertyTypes: true
-      const payload: any = { id };
+    CustomLogger.info(`Recebendo requisição HTTP para atualização do produto ID: ${id}`);
 
-      if (sku !== undefined) payload.sku = sku;
+    const body = req.body as Record<string, unknown>;
+    let skuForLog: string | null = null;
+
+    try {
+      const payload: UpdateProductRequest = { id };
+
+      const sku = parseOptionalNonEmptyString(body.sku, 'sku');
+      const name = parseOptionalNonEmptyString(body.name, 'name');
+      const brand = parseOptionalNullableString(body.brand, 'brand');
+      const variation = parseOptionalNullableString(body.variation, 'variation');
+      const description = parseOptionalNullableString(body.description, 'description');
+      const thumbnail = parseOptionalNullableString(body.thumbnail, 'thumbnail');
+      const medias = parseOptionalProductMedias(body.medias);
+      const indirectCost = parseOptionalNonNegativeNumber(body.indirectCost, 'indirectCost');
+      const finalPrice = parseOptionalNonNegativeNumber(body.finalPrice, 'finalPrice');
+      const abcCategory = parseOptionalAbcCategory(body.abcCategory);
+      const includeFixedCosts = parseOptionalCostInclusion(body.includeFixedCosts);
+
+      if (sku !== undefined) {
+        payload.sku = sku.toUpperCase();
+        skuForLog = payload.sku;
+      }
       if (name !== undefined) payload.name = name;
       if (brand !== undefined) payload.brand = brand;
       if (variation !== undefined) payload.variation = variation;
       if (description !== undefined) payload.description = description;
       if (thumbnail !== undefined) payload.thumbnail = thumbnail;
       if (medias !== undefined) payload.medias = medias;
+      if (indirectCost !== undefined) payload.indirectCost = indirectCost;
+      if (finalPrice !== undefined) payload.finalPrice = finalPrice;
+      if (abcCategory !== undefined) payload.abcCategory = abcCategory;
+      if (includeFixedCosts !== undefined) payload.includeFixedCosts = includeFixedCosts;
 
-      // Validações e conversões de Enums estritos do Prisma
-      if (abcCategory !== undefined) payload.abcCategory = abcCategory as AbcCategory;
-      if (includeFixedCosts !== undefined) payload.includeFixedCosts = includeFixedCosts as CostInclusion;
-
-      // Validações e conversões de numéricos
-      if (indirectCost !== undefined) payload.indirectCost = Number(indirectCost);
-      if (finalPrice !== undefined) payload.finalPrice = Number(finalPrice);
-
-      // ✨ Otimização: Consome diretamente do Handler centralizado, sem overhead de "new UpdateProductService()"
       const updated = await productService.update.execute(payload);
-
       return res.status(200).json(updated);
-    } catch (error: any) {
-      if (error.message === 'ProductNotFoundException') {
-        CustomLogger.warn(`Atualização de produto abortada na camada HTTP: ID ${id} não existe`);
+    } catch (error: unknown) {
+      if (error instanceof ProductRequestValidationError) {
+        CustomLogger.warn(`Atualização do produto ${id} rejeitada por payload inválido`, {
+          field: error.field,
+          reason: error.message
+        });
+        return res.status(400).json({ error: error.message });
+      }
+
+      if (error instanceof Error && error.message === 'ProductNotFoundException') {
+        CustomLogger.warn(`Atualização abortada: produto ID ${id} não existe`);
         return res.status(404).json({ error: 'Produto inexistente no banco de dados.' });
       }
 
-      if (error.message === 'ProductSkuAlreadyExistsException') {
-        CustomLogger.warn(`Atualização de produto abortada na camada HTTP: SKU ${sku} já pertence a outro produto`);
+      if (error instanceof Error && error.message === 'ProductSkuAlreadyExistsException') {
+        CustomLogger.warn(`Atualização abortada: SKU ${skuForLog ?? 'unknown'} já pertence a outro produto`);
         return res.status(409).json({ error: 'O código SKU digitado já pertence a outro produto cadastrado.' });
       }
 
-      CustomLogger.error(`🔥 Erro no PUT do produto ID ${id}:`, error);
+      CustomLogger.error(`Erro no PUT do produto ID ${id}`, error);
       return res.status(500).json({ error: 'Erro interno ao atualizar dados do produto.' });
     }
   }
