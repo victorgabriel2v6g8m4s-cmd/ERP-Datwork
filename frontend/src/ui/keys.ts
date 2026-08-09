@@ -24,7 +24,28 @@ export const UI_KEYS = {
     statusDialogDescription: 'recipes.statusDialog.description',
     statusDialogCancel: 'recipes.statusDialog.cancel',
     statusDialogConfirm: 'recipes.statusDialog.confirm'
+  },
+  pricing: {
+    page: 'pricing.page',
+    header: 'pricing.header',
+    subTabs: 'pricing.subTabs',
+    panel: 'pricing.panel',
+    settingsTab: 'pricing.settings',
+    settingsOperationalTitle: 'pricing.settings.operational.title',
+    settingsMarginsTitle: 'pricing.settings.margins.title',
+    maxProductionCap: 'pricing.settings.maxProductionCap',
+    marginCategoryA: 'pricing.settings.marginCategoryA',
+    marginCategoryB: 'pricing.settings.marginCategoryB',
+    marginCategoryC: 'pricing.settings.marginCategoryC',
+    settingsSubmit: 'pricing.settings.submit',
+    productsTab: 'pricing.products',
+    productFinalPrice: 'pricing.products.finalPrice',
+    productFixedCosts: 'pricing.products.includeFixedCosts',
+    syncStatus: 'pricing.products.syncStatus',
+    servicesPlaceholder: 'pricing.services.placeholder'
   }
 } as const;
 
-export type UiKey = typeof UI_KEYS.recipes[keyof typeof UI_KEYS.recipes];
+export type UiKey =
+  | typeof UI_KEYS.recipes[keyof typeof UI_KEYS.recipes]
+  | typeof UI_KEYS.pricing[keyof typeof UI_KEYS.pricing];

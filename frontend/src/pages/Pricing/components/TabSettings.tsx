@@ -1,121 +1,108 @@
-import { useState, useEffect } from 'react';
-import { Save, Sliders, Layers, CheckCircle, Percent } from 'lucide-react';
-import { api } from '../../../api/client.ts';
+import { CheckCircle, Layers, Percent, Save, Sliders, TriangleAlert } from 'lucide-react';
+import { APP_CONFIG } from '../../../config/app.config.ts';
+import { TEXTS } from '../../../i18n/index.ts';
+import { ERP_THEME } from '../../../theme/presets.ts';
+import { UI_KEYS } from '../../../ui/keys.ts';
+import { usePricingSettings } from '../hooks/usePricingSettings.ts';
 
-export function TabSettings() {
-    const [maxProductionCap, setMaxProductionCap] = useState<number>(0);
-    const [marginCategoryA, setMarginCategoryA] = useState<number>(0);
-    const [marginCategoryB, setMarginCategoryB] = useState<number>(0);
-    const [marginCategoryC, setMarginCategoryC] = useState<number>(0);
+interface TabSettingsProps {
+  onSaved?: () => Promise<void> | void;
+}
 
-    const [loading, setLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
+function clampMargin(value: number): number {
+  return Math.min(
+    APP_CONFIG.pricing.limits.maxMarginPercent,
+    Math.max(APP_CONFIG.pricing.limits.minMarginPercent, value)
+  );
+}
 
-    useEffect(() => {
-        fetchSettings();
-    }, []);
+export function TabSettings({ onSaved }: TabSettingsProps) {
+  const pricing = usePricingSettings(onSaved);
 
-    const fetchSettings = async () => {
-        try {
-            const response = await api.get('/pricing/settings');
-            setMaxProductionCap(response.data.maxProductionCap);
-            setMarginCategoryA(response.data.marginCategoryA);
-            setMarginCategoryB(response.data.marginCategoryB);
-            setMarginCategoryC(response.data.marginCategoryC);
-        } catch (error) {
-            console.error('🔥 Erro ao carregar ajustes:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  if (pricing.loading || !pricing.settings) {
+    return <div className={ERP_THEME.pricing.settings.loading}>{TEXTS.pricing.settings.loading}</div>;
+  }
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSaving(true);
-        try {
-            await api.put('/pricing/settings', {
-                maxProductionCap,
-                marginCategoryA,
-                marginCategoryB,
-                marginCategoryC
-            });
-            alert('⚙️ Constantes de precificação atualizadas globalmente!');
-        } catch {
-            alert('⚠️ Falha ao salvar configurações.');
-        } finally {
-            setIsSaving(false);
-        }
-    };
+  const settings = pricing.settings;
 
-    if (loading) {
-        return <div className="text-center py-8 text-slate-400 animate-pulse font-bold">Carregando parâmetros...</div>;
-    }
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    await pricing.save();
+  };
 
-    return (
-        <form onSubmit={handleSave} className="w-full space-y-5 text-left font-sans text-xs sm:text-sm animate-fadeIn">
+  return (
+    <form onSubmit={handleSubmit} className={ERP_THEME.pricing.settings.form} data-ui-key={UI_KEYS.pricing.settingsTab}>
+      <div className={ERP_THEME.pricing.settings.section}>
+        <h4 className={ERP_THEME.pricing.settings.sectionTitle} data-ui-key={UI_KEYS.pricing.settingsOperationalTitle}>
+          <Sliders className="w-3.5 h-3.5 text-indigo-500" /> {TEXTS.pricing.settings.operationalLimits}
+        </h4>
+        <div className="max-w-xs">
+          <label className={ERP_THEME.pricing.settings.label}>{TEXTS.pricing.settings.maxProductionCap}</label>
+          <input
+            type="number"
+            required
+            min={APP_CONFIG.pricing.limits.minProductionCap}
+            value={settings.maxProductionCap || ''}
+            onChange={(event) => pricing.updateField(
+              'maxProductionCap',
+              Math.max(APP_CONFIG.pricing.limits.minProductionCap, Number(event.target.value))
+            )}
+            placeholder={TEXTS.pricing.settings.maxProductionPlaceholder}
+            className={ERP_THEME.pricing.settings.input}
+            data-ui-key={UI_KEYS.pricing.maxProductionCap}
+          />
+        </div>
+      </div>
 
-            {/* Bloco 1: Capacidade Produtiva */}
-            <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3">
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Sliders className="w-3.5 h-3.5 text-indigo-500" /> Limites Operacionais
-                </h4>
-                <div className="max-w-xs">
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">Capacidade Máxima de Produção (Lotes/Mês)</label>
-                    <input
-                        type="number" required min={1}
-                        value={maxProductionCap || ''}
-                        onChange={(e) => setMaxProductionCap(Math.max(0, Number(e.target.value)))}
-                        placeholder="Ex: 1500"
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500 tabular-nums"
-                    />
+      <div className={ERP_THEME.pricing.settings.section}>
+        <h4 className={ERP_THEME.pricing.settings.sectionTitle} data-ui-key={UI_KEYS.pricing.settingsMarginsTitle}>
+          <Layers className="w-3.5 h-3.5 text-emerald-500" /> {TEXTS.pricing.settings.abcMargins}
+        </h4>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {(['A', 'B', 'C'] as const).map((category) => {
+            const field = `marginCategory${category}` as const;
+            return (
+              <div key={category} className="relative">
+                <label className={ERP_THEME.pricing.settings.label}>{TEXTS.pricing.settings.marginCategory(category)}</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    required
+                    min={APP_CONFIG.pricing.limits.minMarginPercent}
+                    max={APP_CONFIG.pricing.limits.maxMarginPercent}
+                    value={settings[field] || ''}
+                    onChange={(event) => pricing.updateField(field, clampMargin(Number(event.target.value)))}
+                    className={ERP_THEME.pricing.settings.marginInput}
+                    data-ui-key={UI_KEYS.pricing[`marginCategory${category}`]}
+                  />
+                  <Percent className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
                 </div>
-            </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-            {/* Bloco 2: Margens Alvo por Curva ABC */}
-            <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3">
-                <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-emerald-500" /> Margem Bruta Alvo por Curva ABC (Lucro Desejado)
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <label className="block text-[11px] font-bold text-slate-500 mb-1">Margem Categoria A *</label>
-                        <div className="relative">
-                            <input type="number" required min={0} max={100} value={marginCategoryA || ''} onChange={(e) => setMarginCategoryA(Math.min(100, Math.max(0, Number(e.target.value))))} className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-800 focus:outline-none focus:border-indigo-500 tabular-nums" />
-                            <Percent className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-[11px] font-bold text-slate-500 mb-1">Margem Categoria B *</label>
-                        <div className="relative">
-                            <input type="number" required min={0} max={100} value={marginCategoryB || ''} onChange={(e) => setMarginCategoryB(Math.min(100, Math.max(0, Number(e.target.value))))} className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-800 focus:outline-none focus:border-indigo-500 tabular-nums" />
-                            <Percent className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-[11px] font-bold text-slate-500 mb-1">Margem Categoria C *</label>
-                        <div className="relative">
-                            <input type="number" required min={0} max={100} value={marginCategoryC || ''} onChange={(e) => setMarginCategoryC(Math.min(100, Math.max(0, Number(e.target.value))))} className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-800 focus:outline-none focus:border-indigo-500 tabular-nums" />
-                            <Percent className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Botão de Persistência Dedicado */}
-            <div className="flex border-t border-slate-100 pt-4 justify-end">
-                <button
-                    type="submit"
-                    disabled={isSaving}
-                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50"
-                >
-                    {isSaving ? <CheckCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    <span>Salvar Parâmetros</span>
-                </button>
-            </div>
-
-        </form>
-    );
+      <div className={ERP_THEME.pricing.settings.footer}>
+        <div className="min-h-5 flex-1">
+          {pricing.saveState === 'success' && (
+            <span className={ERP_THEME.pricing.settings.successMessage}><CheckCircle className="w-3.5 h-3.5" /> {TEXTS.pricing.settings.saveSuccess}</span>
+          )}
+          {pricing.saveState === 'error' && (
+            <span className={ERP_THEME.pricing.settings.errorMessage}><TriangleAlert className="w-3.5 h-3.5" /> {TEXTS.pricing.settings.saveError}</span>
+          )}
+        </div>
+        <button
+          type="submit"
+          disabled={pricing.isSaving}
+          className={ERP_THEME.pricing.settings.saveButton}
+          data-ui-key={UI_KEYS.pricing.settingsSubmit}
+        >
+          {pricing.isSaving ? <CheckCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{pricing.isSaving ? TEXTS.common.status.saving : TEXTS.pricing.settings.saveAction}</span>
+        </button>
+      </div>
+    </form>
+  );
 }

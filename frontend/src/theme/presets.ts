@@ -66,5 +66,42 @@ export const ERP_THEME = {
             cancelButton: 'flex-1 py-2 bg-slate-100 text-slate-500 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors',
             confirmButton: 'flex-1 py-2 bg-rose-600 text-white rounded-xl cursor-pointer hover:bg-rose-700 transition-colors shadow-md shadow-rose-100'
         }
+    },
+
+    pricing: {
+        page: {
+            shell: 'w-full min-h-screen bg-slate-50/50 pb-24 font-sans selection:bg-indigo-500/10 select-none',
+            main: 'w-full px-6 md:px-8 mt-5 space-y-5',
+            panel: 'w-full bg-white border border-slate-200/80 rounded-3xl p-5 shadow-3xs min-h-[260px]'
+        },
+        settings: {
+            form: 'w-full space-y-5 text-left font-sans text-xs sm:text-sm animate-fadeIn',
+            loading: 'text-center py-8 text-slate-400 animate-pulse font-bold',
+            section: 'bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3',
+            sectionTitle: 'text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5',
+            label: 'block text-[11px] font-bold text-slate-500 mb-1',
+            input: 'w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500 tabular-nums',
+            marginInput: 'w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-800 focus:outline-none focus:border-indigo-500 tabular-nums',
+            footer: 'flex items-center gap-4 border-t border-slate-100 pt-4 justify-end',
+            saveButton: 'px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-100 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed',
+            successMessage: 'text-[10px] font-bold text-emerald-600 inline-flex items-center gap-1',
+            errorMessage: 'text-[10px] font-bold text-rose-600 inline-flex items-center gap-1'
+        },
+        products: {
+            container: 'w-full font-sans text-xs sm:text-sm animate-fadeIn space-y-3 text-left',
+            loading: 'text-center py-12 text-slate-400 font-bold animate-pulse',
+            suggestedPrice: 'font-black text-slate-900 bg-slate-50 py-1 px-2 rounded-xl border border-slate-200/60 font-mono text-[11px] tabular-nums min-w-[75px]',
+            finalPriceInput: 'w-full max-w-[85px] mx-auto px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-center font-black text-indigo-600 focus:outline-none focus:bg-white focus:border-indigo-500 tabular-nums text-xs',
+            netProfit: 'font-black tabular-nums py-0.5 rounded-lg border px-2 min-w-[75px]',
+            netProfitPositive: 'text-emerald-700 bg-emerald-50/20 border-emerald-100',
+            netProfitNegative: 'text-rose-700 bg-rose-50/20 border-rose-100',
+            fixedCostSelect: 'w-full max-w-[90px] mx-auto px-1.5 py-1 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-600 text-[10px] focus:outline-none cursor-pointer',
+            syncSaving: 'text-[10px] font-black text-amber-600 flex items-center gap-0.5 animate-pulse',
+            syncSaved: 'text-[10px] font-black text-emerald-600 flex items-center gap-0.5',
+            syncError: 'text-[10px] font-black text-rose-600 flex items-center gap-0.5'
+        },
+        services: {
+            placeholder: 'space-y-2 text-center py-10'
+        }
     }
 } as const;

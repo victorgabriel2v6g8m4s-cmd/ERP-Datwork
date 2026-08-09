@@ -116,6 +116,58 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       invalidResponse: 'O servidor retornou uma ficha técnica em formato inválido.'
     }
   },
+  pricing: {
+    page: {
+      title: 'Precificação Inteligente',
+      subtitle: 'Simulador de Markup & Lucratividade Real',
+      fixedCostKpi: 'Rateio Fixo Un.',
+      variableExpensesKpi: 'Desp. Variáveis'
+    },
+    tabs: {
+      settings: 'Ajustes',
+      products: 'Produtos',
+      services: 'Serviços'
+    },
+    settings: {
+      loading: 'Carregando parâmetros...',
+      operationalLimits: 'Limites Operacionais',
+      maxProductionCap: 'Capacidade Máxima de Produção (Lotes/Mês)',
+      maxProductionPlaceholder: 'Ex: 1500',
+      abcMargins: 'Margem Bruta Alvo por Curva ABC (Lucro Desejado)',
+      marginCategory: (category) => `Margem Categoria ${category} *`,
+      saveAction: 'Salvar Parâmetros',
+      saveSuccess: 'Parâmetros atualizados e preços recalculados.',
+      saveError: 'Não foi possível salvar os parâmetros.'
+    },
+    products: {
+      loading: 'Lendo tabelas do banco...',
+      thumbnailFallback: 'PROD',
+      abcCategory: (category) => `Curva ${category}`,
+      columns: {
+        item: 'Item / Estrutura Comercial',
+        unitCost: 'Preço Custo Un.',
+        suggestedPrice: 'Preço Sugerido',
+        finalPrice: 'Preço Definitivo',
+        grossProfit: 'Lucro Bruto',
+        netProfit: 'Lucro Líquido',
+        includeFixedCosts: 'Incluir Custo Fixo'
+      },
+      fixedCostOptions: {
+        default: 'Padrão',
+        yes: 'Sim',
+        no: 'Não'
+      },
+      sync: {
+        saving: 'Gravando e recalculando no servidor...',
+        saved: 'Preços e lucros consolidados no banco',
+        error: 'Falha ao sincronizar. Os dados foram recarregados.'
+      }
+    },
+    services: {
+      title: 'Precificação de Mão de Obra',
+      description: 'Estrutura preparada para receber o módulo de serviços.'
+    }
+  },
   orderProfiles: {
     title: 'Perfis de Ordenação Customizados',
     applyHint: 'Clique para aplicar. Botão direito ou segure para renomear.',

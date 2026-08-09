@@ -114,6 +114,58 @@ export interface AppTextDictionary {
       invalidResponse: string;
     };
   };
+  pricing: {
+    page: {
+      title: string;
+      subtitle: string;
+      fixedCostKpi: string;
+      variableExpensesKpi: string;
+    };
+    tabs: {
+      settings: string;
+      products: string;
+      services: string;
+    };
+    settings: {
+      loading: string;
+      operationalLimits: string;
+      maxProductionCap: string;
+      maxProductionPlaceholder: string;
+      abcMargins: string;
+      marginCategory: (category: 'A' | 'B' | 'C') => string;
+      saveAction: string;
+      saveSuccess: string;
+      saveError: string;
+    };
+    products: {
+      loading: string;
+      thumbnailFallback: string;
+      abcCategory: (category: 'A' | 'B' | 'C') => string;
+      columns: {
+        item: string;
+        unitCost: string;
+        suggestedPrice: string;
+        finalPrice: string;
+        grossProfit: string;
+        netProfit: string;
+        includeFixedCosts: string;
+      };
+      fixedCostOptions: {
+        default: string;
+        yes: string;
+        no: string;
+      };
+      sync: {
+        saving: string;
+        saved: string;
+        error: string;
+      };
+    };
+    services: {
+      title: string;
+      description: string;
+    };
+  };
   orderProfiles: {
     title: string;
     applyHint: string;

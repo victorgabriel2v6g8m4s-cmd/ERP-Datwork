@@ -10,6 +10,10 @@ export const APP_CONFIG = {
       uploads: {
         products: '/products/upload',
         appointments: '/appointments/upload'
+      },
+      pricing: {
+        products: '/pricing/products',
+        settings: '/settings'
       }
     }
   },
@@ -39,6 +43,17 @@ export const APP_CONFIG = {
     interactions: {
       swipeActionThresholdPx: 80,
       swipeDragLimitPx: 120
+    }
+  },
+  pricing: {
+    limits: {
+      minProductionCap: 1,
+      minMarginPercent: 0,
+      maxMarginPercent: 100,
+      minFinalPrice: 0
+    },
+    interactions: {
+      productSaveDebounceMs: 800
     }
   }
 } as const;
