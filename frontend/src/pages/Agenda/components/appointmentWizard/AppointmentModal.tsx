@@ -4,7 +4,7 @@ import { Plus, X } from 'lucide-react';
 import { type MediaItem } from '../../../../types/appointment.ts';
 import { ERP_THEME } from '../../../../theme/presets.ts';
 import { useAppointmentWizard } from '../../hooks/useAppointmentWizard.ts';
-import { MediaLightbox } from '../MediaLightbox.tsx';
+import { MediaLightbox } from '../../../../components/MediaLightbox.tsx';
 
 // ✨ Sub-Módulos Atômicos Importados
 import { WizardStep1 } from './WizardStep1.tsx';
@@ -84,7 +84,13 @@ export function AppointmentModal({ onSave }: AppointmentModalProps) {
         )}
       </AnimatePresence>
 
-      <MediaLightbox media={activeLightboxMedia} onClose={() => setActiveLightboxMedia(null)} />
+      <MediaLightbox
+        isOpen={activeLightboxMedia !== null}
+        medias={wizard.medias}
+        activeMedia={activeLightboxMedia}
+        onClose={() => setActiveLightboxMedia(null)}
+        onSelectMedia={(media) => setActiveLightboxMedia(media)}
+      />
     </>
   );
 }

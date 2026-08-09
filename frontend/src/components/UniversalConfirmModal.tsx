@@ -1,13 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ERP_THEME } from '../../../theme/presets.ts'; 
+import { ERP_THEME } from '../theme/presets.ts';
 
-interface CancelAppointmentDialogProps {
+interface UniversalConfirmDialogProps {
     isOpen: boolean;
+    title: string;
+    description: string;
     onClose: () => void;
     onConfirm: () => void;
 }
 
-export function CancelAppointmentDialog({ isOpen, onClose, onConfirm }: CancelAppointmentDialogProps) {
+export function UniversalConfirmDialog({ isOpen, title, description, onClose, onConfirm }: UniversalConfirmDialogProps) {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -18,10 +20,8 @@ export function CancelAppointmentDialog({ isOpen, onClose, onConfirm }: CancelAp
                         exit={{ scale: 0.95, opacity: 0 }}
                         className={ERP_THEME.modal.container}
                     >
-                        <h3 className="text-base font-black text-slate-800">Deseja desmarcar este item?</h3>
-                        <p className="text-xs text-slate-400 font-bold leading-normal">
-                            O registro do agendamento será cancelado.
-                        </p>
+                        <h3 className="text-base font-black text-slate-800">{title}</h3>
+                        <p className="text-xs text-slate-400 font-bold leading-normal">{description}</p>
                         <div className="flex gap-2 pt-2">
                             <button type="button" onClick={onClose} className={ERP_THEME.modal.btnCancel}>
                                 Desistir

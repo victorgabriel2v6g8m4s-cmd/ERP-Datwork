@@ -7,13 +7,15 @@ interface GridGesturesOptions<T> {
     currentList: T[];                      // Array de dados ativo da tela
     setListState: (list: T[]) => void;     // Modificador de estado do React do componente pai
     onRefresh: () => Promise<void> | void; // Callback síncrono para recarregar a tela pós-gravação
+    skipConfirmDelete?: boolean;
 }
 
 export function useGridGestures<T extends { id: string; status: string; position?: number; subStatus?: string }>({
     endpoint,
     currentList,
     setListState,
-    onRefresh
+    onRefresh,
+    skipConfirmDelete = false
 }: GridGesturesOptions<T>) {
 
     // ✨ Nome genérico e unificado para qualquer registro do ERP (Inquilinato)
@@ -92,18 +94,32 @@ export function useGridGestures<T extends { id: string; status: string; position
     };
 
     // 🚨 AÇÃO C: Disparador de Popup de Confirmação para Soft-Delete / Cancelamento (Swipe Left)
-    const triggerSoftDelete = async (item: T) => {
+    const triggerSoftDelete = async (item: T, deleteStatusTarget = 'CANCELED', activeStatusTarget = 'PENDING') => {
         if (item.status === 'PENDING' || item.status === 'SCHEDULED' || item.status === 'ACTIVE') {
+
+            // Se skipConfirmDelete for true, deleta direto
+            if (skipConfirmDelete) {
+                setListState(currentList.map(i => i.id === item.id ? { ...i, status: deleteStatusTarget } : i));
+                try {
+                    await api.patch(`${endpoint}/${item.id}/status`, { status: deleteStatusTarget });
+                    onRefresh();
+                } catch (error) { onRefresh(); }
+                return;
+            }
+
             setActiveItem(item);
             setConfirmModalOpen(true);
-        } else if (item.status === 'COMPLETED' || item.status === 'CANCELED' || item.status === 'INACTIVE') {
-            CustomLogger.info(`[Grid Gestures] Executando fluxo inverso (Reativação direta) para o item ${item.id}`);
-            setListState(currentList.map(i => i.id === item.id ? { ...i, status: 'PENDING' } : i));
+        } else {
+            // 🔄 FLUXO REVERSO DE REATIVAÇÃO INTEGRADO:
+            // ✨ CORREÇÃO: Passa a usar a variável dinâmica activeStatusTarget ('ACTIVE' ou 'PENDING')
+            CustomLogger.info(`[Grid Gestures] Reativando registro de forma direta com o status: "${activeStatusTarget}"`);
+            setListState(currentList.map(i => i.id === item.id ? { ...i, status: activeStatusTarget } : i));
+
             try {
-                await api.patch(`${endpoint}/${item.id}/status`, { status: 'PENDING' });
+                await api.patch(`${endpoint}/${item.id}/status`, { status: activeStatusTarget });
                 onRefresh();
             } catch (error) {
-                CustomLogger.error(`[Grid Gestures] Falha ao reativar registro ${item.id}`, error);
+                CustomLogger.error(`[Grid Gestures] Erro ao reativar registro no banco`, error);
                 onRefresh();
             }
         }
@@ -169,7 +185,7 @@ export function useGridGestures<T extends { id: string; status: string; position
         actions: {
             handleDragEnd,
             cycleStatus,
-            triggerSoftDelete,
+            triggerSoftDelete: (item: T, delStatus?: string, actStatus?: string) => triggerSoftDelete(item, delStatus, actStatus),
             executeConfirmDelete,
             openEditModal,
             openViewModal,

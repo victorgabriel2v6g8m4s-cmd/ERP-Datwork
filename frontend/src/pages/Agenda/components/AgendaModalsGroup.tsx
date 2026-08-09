@@ -1,4 +1,4 @@
-import { CancelAppointmentDialog } from './CancelAppointmentDialog.tsx';
+import { UniversalConfirmDialog } from '../../../components/UniversalConfirmModal.tsx';
 import { EditAppointmentModal } from './appointmentEditor/EditAppointmentModal.tsx';
 import { ViewAppointmentModal } from './appointmentViewer/ViewAppointmentModal.tsx';
 import { CascadeRescheduleModal } from './appointmentCascade/CascadeRescheduleModal.tsx';
@@ -32,8 +32,10 @@ export function AgendaModalsGroup({
 }: AgendaModalsGroupProps & { actions: any }) {
     return (
         <>
-            <CancelAppointmentDialog
+            <UniversalConfirmDialog
                 isOpen={confirmModalOpen}
+                title="Deseja desmarcar este item?"
+                description="O agendamento será cancelado."
                 onClose={() => { setConfirmModalOpen(false); setSelectedAppointment(null); }}
                 onConfirm={() => actions.executeConfirmDelete('CANCELED')}
             />

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, FileText, Save } from 'lucide-react';
 import { type Appointment } from '../../../../types/appointment.ts';
-import { MediaLightbox } from '../MediaLightbox.tsx';
+import { MediaLightbox } from '../../../../components/MediaLightbox.tsx'
 import { CustomerAccordion } from '../../../../components/CustomerAccordion.tsx';
 import { FinancialManager } from '../../../../components/FinancialManager.tsx';
 import { MediaManager } from '../../../../components/MediaManager.tsx';
@@ -81,10 +81,10 @@ export function EditAppointmentModal(props: EditAppointmentModalProps) {
 
                             {/* 🧩 BLOCO 5: RODAPÉ E BOTÕES DE AÇÃO */}
                             <div className="flex gap-3 border-t border-slate-100 pt-4 justify-end">
-                                <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-semibold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">
+                                <button type="button" onClick={onClose} className={ERP_THEME.modal.btnCancel}>
                                     Cancelar
                                 </button>
-                                <button type="submit" className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors shadow-md shadow-indigo-100 cursor-pointer">
+                                <button type="submit" className={ERP_THEME.modal.btnConfirm}>
                                     <Save className="w-4 h-4" />
                                     <span>Salvar Alterações</span>
                                 </button>
@@ -95,7 +95,13 @@ export function EditAppointmentModal(props: EditAppointmentModalProps) {
             </AnimatePresence>
 
             {/* ✨ REAPROVEITAMENTO UNIVERSAL: Consome o mesmo Lightbox modular do Wizard! */}
-            <MediaLightbox media={editor.activeMedia} onClose={() => editor.setActiveMedia(null)} />
+            <MediaLightbox
+                isOpen={editor.activeMedia !== null}
+                medias={editor.medias}
+                activeMedia={editor.activeMedia}
+                onClose={() => editor.setActiveMedia(null)}
+                onSelectMedia={(media) => editor.setActiveMedia(media)}
+            />
         </>
     );
 }

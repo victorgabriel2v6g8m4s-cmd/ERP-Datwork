@@ -11,9 +11,6 @@ export class ListIngredientsController {
     try {
       // ✨ Otimização: Filtra apenas os insumos ativos para o grid, ordenando pelo Drag-and-Drop
       const ingredients = await prismaClient.ingredient.findMany({
-        where: {
-          status: ProductStatus.ACTIVE // ✨ Uso do Enum estrito do Schema
-        },
         orderBy: {
           position: 'asc'
         },
