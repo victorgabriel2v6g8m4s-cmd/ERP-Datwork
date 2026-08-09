@@ -46,6 +46,9 @@ jobs:
       - name: Test frontend
         run: npm test
 
+      - name: Typecheck shared frontend
+        run: npm run typecheck:shared
+
       - name: Lint frontend
         run: npm run lint
         continue-on-error: true
@@ -57,7 +60,7 @@ jobs:
 
       - name: Report TypeScript debt
         if: steps.frontend-typecheck.outcome == 'failure'
-        run: echo '::warning::Full frontend TypeScript validation still contains legacy debt. Tests and the production bundle remain blocking while modules are progressively refactored.'
+        run: echo '::warning::Full frontend TypeScript validation still contains legacy debt. Shared frontend code is already enforced separately.'
 
       - name: Build frontend bundle
         run: npm run build:bundle

@@ -1,4 +1,3 @@
-// 🪐 TOKENS DE DESIGN CORPORATIVOS DO ERP
 export const ERP_THEME = {
     card: {
         base: 'flex items-center justify-between p-4 rounded-2xl shadow-sm border transition-all select-none touch-pan-y',
@@ -27,5 +26,11 @@ export const ERP_THEME = {
         PENDING: 'bg-indigo-50 text-indigo-700 border-indigo-150',
         COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-150',
         CANCELED: 'bg-rose-50 text-rose-700 border-rose-150'
+    },
+
+    timeline: {
+        active: 'bg-indigo-600 border-indigo-600 text-white font-bold shadow-sm',
+        inactive: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100',
+        pinnedBadge: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-amber-700 font-black'
     }
-};
+} as const;
