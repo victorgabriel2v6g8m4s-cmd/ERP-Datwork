@@ -72,6 +72,7 @@ export const UI_KEYS = {
     statusFilter: 'agenda.filters.status',
     dateFilter: 'agenda.filters.date',
     list: 'agenda.list',
+    listEmpty: 'agenda.list.emptyState',
     card: 'agenda.card',
     cardTitle: 'agenda.card.title',
     cardStatus: 'agenda.card.status',
