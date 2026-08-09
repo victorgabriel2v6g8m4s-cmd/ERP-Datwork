@@ -34,7 +34,7 @@ export function ProductsPage() {
             filters.setActiveFilters((current) => ({ ...current, sortBy: 'custom' }));
         }
 
-        await actionsState.actions.handleDragEnd(result, filters.filteredProducts);
+        await actionsState.actions.handleVisibleDragEnd(result, filters.filteredProducts);
     };
 
     const handleDeleteOrderProfile = async (id: string) => {

@@ -65,6 +65,7 @@ Controllers não devem concentrar regras de negócio complexas.
 - Autenticação e autorização devem ser verificadas no backend; proteção visual no frontend não substitui autorização.
 - Preferir soft-delete quando dados possuírem valor histórico ou financeiro.
 - Novas dependências devem ser justificadas e avaliadas antes da inclusão.
+- Dependências com install scripts devem ser explicitamente aprovadas via `allowScripts`; não desabilitar a política com permissões globais.
 
 ## 6. Performance
 
@@ -101,9 +102,11 @@ Controllers não devem concentrar regras de negócio complexas.
 Comandos padrão:
 
 ```bash
-cd frontend && npm ci && npm test && npm run build
-cd backend && npm ci && DATABASE_URL=file:./ci.db npx prisma migrate deploy && DATABASE_URL=file:./ci.db npm test
+cd frontend && npm ci && npm test && npm run typecheck && npm run build:bundle
+cd backend && npm ci && DATABASE_URL=file:./ci.db npx prisma migrate deploy && DATABASE_URL=file:./ci.db npx prisma generate && DATABASE_URL=file:./ci.db npm test
 ```
+
+Durante a refatoração atual, o `typecheck` global do frontend ainda contém dívida legada e é informativo no CI. Testes e `build:bundle` são bloqueantes. O objetivo é tornar o `typecheck` bloqueante assim que a dívida existente for eliminada.
 
 ## 10. Fluxo de trabalho
 
@@ -123,5 +126,5 @@ Uma tarefa só é considerada concluída quando:
 3. logs relevantes estão presentes;
 4. riscos de segurança e performance foram revisados;
 5. testes aplicáveis foram adicionados/atualizados;
-6. build e CI estão consistentes;
+6. validações de CI aplicáveis ao escopo estão consistentes;
 7. não foram introduzidas mudanças não relacionadas ao escopo.

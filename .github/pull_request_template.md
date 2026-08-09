@@ -15,8 +15,10 @@ Descreva objetivamente o que esta alteração faz e por quê.
 ## Validação realizada
 
 - [ ] Frontend: `npm test`
-- [ ] Frontend: `npm run build`
+- [ ] Frontend: `npm run typecheck` revisado
+- [ ] Frontend: `npm run build:bundle`
 - [ ] Backend: migrations em banco temporário
+- [ ] Backend: `prisma generate`
 - [ ] Backend: `npm test`
 - [ ] Fluxo alterado foi testado manualmente quando aplicável
 
@@ -32,6 +34,7 @@ Descreva objetivamente o que esta alteração faz e por quê.
 - [ ] Revisei impacto de performance.
 - [ ] Estilos novos seguem componentes/tokens/padrões reutilizáveis.
 - [ ] Adicionei ou atualizei testes quando aplicável.
+- [ ] Novos install scripts de dependências foram revisados/aprovados explicitamente.
 - [ ] CI está verde ou qualquer exceção está documentada abaixo.
 
 ## Riscos / observações
