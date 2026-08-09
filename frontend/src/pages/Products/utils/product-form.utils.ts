@@ -1,6 +1,7 @@
 import type { Product } from '../../../types/product.ts';
+import { APP_CONFIG, formatMegabytes } from '../../../config/app.config.ts';
+import { TEXTS } from '../../../i18n/index.ts';
 import { parseProductResponse } from '../../../utils/productContract.ts';
-import { PRODUCT_THUMBNAIL_UPLOAD } from '../constants/product-upload.constants.ts';
 import type {
     ProductCostPreview,
     ProductFormValidation,
@@ -15,7 +16,7 @@ function normalizeNonNegativeNumber(value: unknown, fallback = 0): number {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
 }
 
-function normalizePositiveInteger(value: unknown, fallback = 1): number {
+function normalizePositiveInteger(value: unknown, fallback = APP_CONFIG.products.defaults.unitsPerBatch): number {
     const parsed = typeof value === 'number' ? value : Number(value);
     return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
@@ -29,11 +30,11 @@ export function createProductFormValues(product?: Product | null): ProductFormVa
             variation: '',
             description: '',
             recipeCostPerUnit: 0,
-            unitsPerBatch: 1,
+            unitsPerBatch: APP_CONFIG.products.defaults.unitsPerBatch,
             indirectCost: 0,
             finalPrice: 0,
-            abcCategory: 'C',
-            includeFixedCosts: 'DEFAULT',
+            abcCategory: APP_CONFIG.products.defaults.abcCategory,
+            includeFixedCosts: APP_CONFIG.products.defaults.includeFixedCosts,
             thumbnail: null,
             medias: []
         };
@@ -72,15 +73,15 @@ export function calculateProductCostPreview(
 export function validateProductForm(values: ProductFormValues): ProductFormValidation {
     const errors: ProductFormValidation['errors'] = {};
 
-    if (!values.sku.trim()) errors.sku = 'Informe o SKU do produto.';
-    if (!values.name.trim()) errors.name = 'Informe o nome do produto.';
+    if (!values.sku.trim()) errors.sku = TEXTS.products.validation.skuRequired;
+    if (!values.name.trim()) errors.name = TEXTS.products.validation.nameRequired;
 
     if (!Number.isFinite(values.indirectCost) || values.indirectCost < 0) {
-        errors.indirectCost = 'O custo indireto deve ser um número maior ou igual a zero.';
+        errors.indirectCost = TEXTS.products.validation.indirectCostNonNegative;
     }
 
     if (!Number.isFinite(values.finalPrice) || values.finalPrice < 0) {
-        errors.finalPrice = 'O preço final deve ser um número maior ou igual a zero.';
+        errors.finalPrice = TEXTS.products.validation.finalPriceNonNegative;
     }
 
     return {
@@ -98,7 +99,7 @@ export function buildProductMutationPayload(values: ProductFormValues): ProductM
     return {
         sku: values.sku.trim().toUpperCase(),
         name: values.name.trim(),
-        brand: values.brand.trim() || 'Sem Marca',
+        brand: values.brand.trim() || APP_CONFIG.products.defaults.brand,
         variation: values.variation.trim() || null,
         description: values.description.trim() || null,
         indirectCost: values.indirectCost,
@@ -125,15 +126,17 @@ export function parseProductSnapshot(value: unknown): Product | null {
 }
 
 export function validateProductThumbnailFile(file: Pick<File, 'type' | 'size'>): string | null {
-    if (file.size <= 0) return 'O arquivo de imagem está vazio.';
+    const thumbnailConfig = APP_CONFIG.uploads.productThumbnail;
 
-    if (file.size > PRODUCT_THUMBNAIL_UPLOAD.maxSizeBytes) {
-        return 'A imagem de capa deve ter no máximo 5 MB.';
+    if (file.size <= 0) return TEXTS.uploads.errors.emptyImage;
+
+    if (file.size > thumbnailConfig.maxSizeBytes) {
+        return TEXTS.uploads.errors.productThumbnailMaxSize(formatMegabytes(thumbnailConfig.maxSizeBytes));
     }
 
-    const acceptedTypes: readonly string[] = PRODUCT_THUMBNAIL_UPLOAD.acceptedMimeTypes;
+    const acceptedTypes: readonly string[] = thumbnailConfig.acceptedMimeTypes;
     if (!acceptedTypes.includes(file.type)) {
-        return 'Formato não permitido. Use JPG, PNG ou WEBP.';
+        return TEXTS.uploads.errors.unsupportedProductThumbnailFormat;
     }
 
     return null;
