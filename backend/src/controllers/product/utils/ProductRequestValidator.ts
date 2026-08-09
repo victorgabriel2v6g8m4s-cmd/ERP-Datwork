@@ -1,5 +1,7 @@
 import { AbcCategory, CostInclusion, Prisma } from '@prisma/client';
 
+type ProductMediaType = 'image' | 'video' | 'document';
+
 export class ProductRequestValidationError extends Error {
     constructor(
         public readonly field: string,
@@ -12,6 +14,14 @@ export class ProductRequestValidationError extends Error {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseProductMediaType(value: unknown, index: number): ProductMediaType {
+    if (value === 'image' || value === 'video' || value === 'document') {
+        return value;
+    }
+
+    throw new ProductRequestValidationError('medias', `A mídia na posição ${index} possui tipo inválido.`);
 }
 
 export function parseRequiredNonEmptyString(value: unknown, field: string): string {
@@ -97,11 +107,7 @@ export function parseOptionalProductMedias(value: unknown): Prisma.InputJsonValu
         const id = parseRequiredNonEmptyString(entry.id, `medias[${index}].id`);
         const name = parseRequiredNonEmptyString(entry.name, `medias[${index}].name`);
         const url = parseRequiredNonEmptyString(entry.url, `medias[${index}].url`);
-        const type = entry.type;
-
-        if (type !== 'image' && type !== 'video' && type !== 'document') {
-            throw new ProductRequestValidationError('medias', `A mídia na posição ${index} possui tipo inválido.`);
-        }
+        const type = parseProductMediaType(entry.type, index);
 
         return { id, name, url, type };
     });

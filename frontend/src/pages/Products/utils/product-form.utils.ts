@@ -1,6 +1,6 @@
 import type { MediaItem } from '../../../types/appointment.ts';
 import type { Product } from '../../../types/product.ts';
-import { PRODUCT_THUMBNAIL_UPLOAD } from '../constants/products.constants.ts';
+import { PRODUCT_THUMBNAIL_UPLOAD } from '../constants/product-upload.constants.ts';
 import type {
     ProductAbcCategory,
     ProductCostInclusion,
