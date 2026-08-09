@@ -1,5 +1,5 @@
 import type { Product } from '../../../types/product.ts';
-import { parseProductMedias, parseProductResponse } from '../../../utils/productContract.ts';
+import { parseProductResponse } from '../../../utils/productContract.ts';
 import { PRODUCT_THUMBNAIL_UPLOAD } from '../constants/product-upload.constants.ts';
 import type {
     ProductCostPreview,

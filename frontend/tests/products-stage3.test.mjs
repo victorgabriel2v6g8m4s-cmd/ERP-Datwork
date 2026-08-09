@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
 const {
     parseProductList,
@@ -32,6 +34,22 @@ function productResponse(overrides = {}) {
         updatedAt: '2026-08-09T00:00:00.000Z',
         ...overrides
     };
+}
+
+async function collectTypeScriptFiles(directory) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    const files = [];
+
+    for (const entry of entries) {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) {
+            files.push(...await collectTypeScriptFiles(path));
+        } else if (/\.tsx?$/.test(entry.name)) {
+            files.push(path);
+        }
+    }
+
+    return files;
 }
 
 test('Product response parser returns only the canonical read contract', () => {
@@ -70,4 +88,19 @@ test('Product read type no longer exposes legacy aliases or string escape hatche
     assert.doesNotMatch(source, /includeFixedCosts:\s*[^;]*\|\s*string/);
     assert.match(source, /medias:\s*MediaItem\[\]/);
     assert.match(source, /interface ProductMutationInput/);
+});
+
+test('production frontend does not consume removed Product legacy cost aliases', async () => {
+    const sourceRoot = fileURLToPath(new URL('../src/', import.meta.url));
+    const files = await collectTypeScriptFiles(sourceRoot);
+    const offenders = [];
+
+    for (const file of files) {
+        const source = await readFile(file, 'utf8');
+        if (/\b(?:batchCost|productionCost)\b/.test(source)) {
+            offenders.push(file.replace(sourceRoot, 'src/'));
+        }
+    }
+
+    assert.deepEqual(offenders, []);
 });

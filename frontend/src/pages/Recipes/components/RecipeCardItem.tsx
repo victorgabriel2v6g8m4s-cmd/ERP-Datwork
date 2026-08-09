@@ -19,9 +19,6 @@ export function RecipeCardItem({ recipe, index, onSwipeLeft, onSwipeRight, onCar
     const cardBg = useTransform(dragX, [-100, 0, 100], [isInactive ? '#10b981' : '#ef4444', isInactive ? '#fef2f2' : '#ffffff', '#6366f1']);
     const indicatorOpacity = useTransform(dragX, [-80, -20], [1, 0, 1]);
 
-    // 🧮 MÁQUINA MATEMÁTICA LOCAL: Custo Unitário Fracionado por Porção (Custo Lote / Qtd Porções)
-    const calculatedUnitCost = (recipe.product.batchCost || 0) / (recipe.product.unitsPerBatch || 1);
-
     return (
         <Draggable draggableId={recipe.id} index={index}>
             {(dragProvided, snapshot) => (
