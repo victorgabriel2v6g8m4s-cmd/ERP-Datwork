@@ -90,14 +90,21 @@ test('Pricing operational values and real backend endpoints are centralized', ()
 test('Pricing module uses service, text, theme and UI-key boundaries', async () => {
   const sourceRoot = fileURLToPath(new URL('../src/pages/Pricing/', import.meta.url));
   const files = await collectTypeScriptFiles(sourceRoot);
-  const combined = (await Promise.all(files.map((file) => readFile(file, 'utf8')))).join('\n');
+  const sources = await Promise.all(files.map(async (file) => ({ file, source: await readFile(file, 'utf8') })));
+  const serviceSources = sources.filter(({ file }) => file.includes('/services/'));
+  const consumerSources = sources.filter(({ file }) => !file.includes('/services/'));
+  const allSource = sources.map(({ source }) => source).join('\n');
+  const consumerSource = consumerSources.map(({ source }) => source).join('\n');
+  const serviceSource = serviceSources.map(({ source }) => source).join('\n');
 
-  assert.doesNotMatch(combined, /api\/client/);
-  assert.doesNotMatch(combined, /console\.(?:log|warn|error)/);
-  assert.doesNotMatch(combined, /:\s*any\b|as\s+any\b/);
-  assert.match(combined, /pricingService/);
-  assert.match(combined, /TEXTS\.pricing/);
-  assert.match(combined, /ERP_THEME\.pricing/);
-  assert.match(combined, /UI_KEYS\.pricing/);
-  assert.doesNotMatch(combined, /['"]\/pricing\/settings['"]/);
+  assert.doesNotMatch(consumerSource, /api\/client/);
+  assert.match(serviceSource, /api\/client/);
+  assert.match(serviceSource, /APP_CONFIG\.api\.endpoints\.pricing/);
+  assert.doesNotMatch(allSource, /console\.(?:log|warn|error)/);
+  assert.doesNotMatch(allSource, /:\s*any\b|as\s+any\b/);
+  assert.match(allSource, /pricingService/);
+  assert.match(allSource, /TEXTS\.pricing/);
+  assert.match(allSource, /ERP_THEME\.pricing/);
+  assert.match(allSource, /UI_KEYS\.pricing/);
+  assert.doesNotMatch(allSource, /['"]\/pricing\/settings['"]/);
 });
