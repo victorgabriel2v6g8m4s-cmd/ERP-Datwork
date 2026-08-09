@@ -3,6 +3,7 @@ import prismaClient from '../../../config/prisma.js';
 import type { AppointmentResponse, AppointmentUpdateInput } from '../../../contracts/appointment/AppointmentContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
 import { presentAppointment } from '../../../presenters/appointment/AppointmentPresenter.js';
+import { toAppointmentFinancialJson, toAppointmentMediaJson } from '../utils/AppointmentJson.js';
 
 export class UpdateAppointmentService {
   async execute(data: AppointmentUpdateInput): Promise<AppointmentResponse> {
@@ -14,8 +15,8 @@ export class UpdateAppointmentService {
         where: { id },
         data: {
           ...fields,
-          medias: medias as Prisma.InputJsonValue,
-          financials: financials as Prisma.InputJsonValue
+          medias: toAppointmentMediaJson(medias),
+          financials: toAppointmentFinancialJson(financials)
         }
       });
       return presentAppointment(updated);

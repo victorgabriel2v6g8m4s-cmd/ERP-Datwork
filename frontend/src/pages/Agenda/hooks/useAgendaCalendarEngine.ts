@@ -14,8 +14,8 @@ export function useAgendaCalendarEngine(appointments: Appointment[]) {
   const [rangeStart, setRangeStart] = useState<Date | null>(null);
   const [rangeEnd, setRangeEnd] = useState<Date | null>(null);
   const [pivotDate, setPivotDate] = useState(() => new Date());
-  const [pastBuffer, setPastBuffer] = useState(config.initialPastMonths);
-  const [futureBuffer, setFutureBuffer] = useState(config.initialFutureMonths);
+  const [pastBuffer, setPastBuffer] = useState<number>(config.initialPastMonths);
+  const [futureBuffer, setFutureBuffer] = useState<number>(config.initialFutureMonths);
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
   const [isEngineLoading, setIsEngineLoading] = useState(false);

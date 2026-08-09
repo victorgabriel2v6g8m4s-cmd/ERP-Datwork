@@ -18,7 +18,7 @@ export function useAppointmentWizard({ onSave }: UseAppointmentWizardProps) {
   const [description, setDescription] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [documentType, setDocumentType] = useState(APP_CONFIG.agenda.defaults.documentType);
+  const [documentType, setDocumentType] = useState<string>(APP_CONFIG.agenda.defaults.documentType);
   const [documentNumber, setDocumentNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');

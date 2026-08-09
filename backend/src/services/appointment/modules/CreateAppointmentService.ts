@@ -1,8 +1,9 @@
-import { AppointmentStatus, Prisma } from '@prisma/client';
+import { AppointmentStatus } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
 import type { AppointmentMutationInput, AppointmentResponse } from '../../../contracts/appointment/AppointmentContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
 import { presentAppointment } from '../../../presenters/appointment/AppointmentPresenter.js';
+import { toAppointmentFinancialJson, toAppointmentMediaJson } from '../utils/AppointmentJson.js';
 
 export class CreateAppointmentService {
   async execute(data: AppointmentMutationInput): Promise<AppointmentResponse> {
@@ -17,8 +18,8 @@ export class CreateAppointmentService {
       return tx.appointment.create({
         data: {
           ...data,
-          medias: data.medias as Prisma.InputJsonValue,
-          financials: data.financials as Prisma.InputJsonValue,
+          medias: toAppointmentMediaJson(data.medias),
+          financials: toAppointmentFinancialJson(data.financials),
           position: lastAppointment ? lastAppointment.position + 1 : 0,
           status: AppointmentStatus.PENDING
         }
