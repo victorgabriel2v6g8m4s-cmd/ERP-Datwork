@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { APP_CONFIG } from '../../../config/app.config.ts';
+import { TEXTS } from '../../../i18n/index.ts';
 import { type Product } from '../../../types/product.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import { uploadMedia } from '../../../utils/uploadService.ts';
@@ -82,9 +84,9 @@ export function useProductForm({ isOpen, product = null, mode }: UseProductFormO
         setIsThumbnailUploading(true);
 
         try {
-            const media = await uploadMedia(file, '/products/upload');
+            const media = await uploadMedia(file, APP_CONFIG.api.endpoints.uploads.products);
             if (!media) {
-                setThumbnailError('Não foi possível enviar a imagem de capa.');
+                setThumbnailError(TEXTS.uploads.errors.productThumbnailUploadFailed);
                 return;
             }
 
