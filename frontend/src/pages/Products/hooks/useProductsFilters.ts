@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import { type Product } from '../../../types/product.ts';
 import { type UniversalFilters } from '../../../components/index.ts';
-import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import { PRODUCT_DEFAULT_FILTERS } from '../constants/products.constants.ts';
-import { type ProductOrderProfile, type ProductOrderPosition } from '../services/products.service.ts';
+import {
+    parseProductOrderPositions,
+    type ProductOrderProfile,
+    type ProductOrderPosition
+} from '../services/products.service.ts';
 
 export function useProductsFilters(products: Product[], orderProfiles: ProductOrderProfile[]) {
     const [activeFilters, setActiveFilters] = useState<UniversalFilters>({ ...PRODUCT_DEFAULT_FILTERS });
@@ -43,17 +46,13 @@ export function useProductsFilters(products: Product[], orderProfiles: ProductOr
             const profile = orderProfiles.find((item) => item.id === profileId);
 
             if (profile) {
-                try {
-                    const positions = JSON.parse(profile.positions) as ProductOrderPosition[];
-                    const positionsById = new Map(positions.map((position) => [position.id, position.position]));
+                const positions = parseProductOrderPositions(profile.positions);
+                const positionsById = new Map(positions.map((position) => [position.id, position.position]));
 
-                    return [...result].sort((a, b) =>
-                        (positionsById.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
-                        (positionsById.get(b.id) ?? Number.MAX_SAFE_INTEGER)
-                    );
-                } catch (error) {
-                    CustomLogger.error(`[Products] Failed to parse order profile ${profile.id}`, error);
-                }
+                return [...result].sort((a, b) =>
+                    (positionsById.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+                    (positionsById.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+                );
             }
         }
 
