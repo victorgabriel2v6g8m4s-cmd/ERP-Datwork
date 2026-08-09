@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TEXTS } from '../../../i18n/index.ts';
 import { type Product } from '../../../types/product.ts';
 import { useGridGestures } from '../../../hooks/useGridGestures.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
@@ -81,7 +82,8 @@ export function useProductsActions() {
             await fetchProducts();
         } catch (error) {
             CustomLogger.error('[Products] Failed to create product', error);
-            alert(`Erro: ${getProductApiErrorMessage(error, 'Falha ao salvar produto.')}`);
+            const message = getProductApiErrorMessage(error, TEXTS.products.errors.createFallback);
+            alert(TEXTS.products.errors.create(message));
             throw error;
         }
     };
@@ -95,7 +97,8 @@ export function useProductsActions() {
             await fetchProducts();
         } catch (error) {
             CustomLogger.error(`[Products] Failed to update product ${id}`, error);
-            alert(`Erro ao atualizar: ${getProductApiErrorMessage(error, 'Falha na rede.')}`);
+            const message = getProductApiErrorMessage(error, TEXTS.products.errors.updateFallback);
+            alert(TEXTS.products.errors.update(message));
             throw error;
         }
     };
