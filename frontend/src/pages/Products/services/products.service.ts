@@ -1,5 +1,6 @@
 import { api } from '../../../api/client.ts';
 import { type Product } from '../../../types/product.ts';
+import { CustomLogger } from '../../../utils/CustomLogger.ts';
 
 export interface ProductOrderPosition {
     id: string;
@@ -12,13 +13,70 @@ export interface ProductOrderProfile {
     positions: string;
 }
 
-function normalizeOrderProfile(profile: any): ProductOrderProfile {
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function parseProductOrderPositions(value: unknown): ProductOrderPosition[] {
+    let parsedValue = value;
+
+    if (typeof value === 'string') {
+        try {
+            parsedValue = JSON.parse(value) as unknown;
+        } catch (error) {
+            CustomLogger.warn('[Products] Invalid serialized order profile positions received from API', error);
+            return [];
+        }
+    }
+
+    if (!Array.isArray(parsedValue)) {
+        if (parsedValue !== null && parsedValue !== undefined) {
+            CustomLogger.warn('[Products] Invalid order profile positions structure received from API');
+        }
+        return [];
+    }
+
+    const uniqueIds = new Set<string>();
+    const positions: ProductOrderPosition[] = [];
+
+    for (const entry of parsedValue) {
+        if (!isRecord(entry)) continue;
+
+        const id = typeof entry.id === 'string' ? entry.id.trim() : '';
+        const position = typeof entry.position === 'number'
+            ? entry.position
+            : Number(entry.position);
+
+        if (!id || !Number.isInteger(position) || position < 0 || uniqueIds.has(id)) {
+            continue;
+        }
+
+        uniqueIds.add(id);
+        positions.push({ id, position });
+    }
+
+    return positions;
+}
+
+function normalizeOrderProfile(profile: unknown): ProductOrderProfile | null {
+    if (!isRecord(profile)) {
+        CustomLogger.warn('[Products] Invalid order profile record received from API');
+        return null;
+    }
+
+    const id = typeof profile.id === 'string' ? profile.id.trim() : '';
+    if (!id) {
+        CustomLogger.warn('[Products] Order profile ignored because its identifier is invalid');
+        return null;
+    }
+
+    const name = typeof profile.name === 'string' ? profile.name.trim() : '';
+    const positions = parseProductOrderPositions(profile.positions);
+
     return {
-        id: String(profile.id),
-        name: String(profile.name ?? ''),
-        positions: typeof profile.positions === 'string'
-            ? profile.positions
-            : JSON.stringify(profile.positions ?? [])
+        id,
+        name,
+        positions: JSON.stringify(positions)
     };
 }
 
@@ -39,8 +97,11 @@ export const productsService = {
     },
 
     async listOrderProfiles(): Promise<ProductOrderProfile[]> {
-        const response = await api.get<any[]>('/products/orders');
-        return response.data.map(normalizeOrderProfile);
+        const response = await api.get<unknown[]>('/products/orders');
+
+        return response.data
+            .map(normalizeOrderProfile)
+            .filter((profile): profile is ProductOrderProfile => profile !== null);
     },
 
     async createOrderProfile(name: string, positions: ProductOrderPosition[]): Promise<void> {
