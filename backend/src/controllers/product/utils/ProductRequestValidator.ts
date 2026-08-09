@@ -86,7 +86,7 @@ export function parseOptionalCostInclusion(value: unknown): CostInclusion | unde
 export function parseOptionalProductMedias(value: unknown): Prisma.InputJsonValue | undefined {
     if (value === undefined) return undefined;
 
-    let parsed = value;
+    let parsed: unknown = value;
     if (typeof value === 'string') {
         try {
             parsed = JSON.parse(value) as unknown;
