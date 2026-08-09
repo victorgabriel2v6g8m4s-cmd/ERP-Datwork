@@ -45,9 +45,10 @@ export function useProductForm({ isOpen, product = null, mode }: UseProductFormO
         setValues((current) => ({ ...current, [field]: value }));
     }, []);
 
+    const { recipeCostPerUnit, unitsPerBatch, indirectCost } = values;
     const costPreview = useMemo(
-        () => calculateProductCostPreview(values),
-        [values.recipeCostPerUnit, values.unitsPerBatch, values.indirectCost]
+        () => calculateProductCostPreview({ recipeCostPerUnit, unitsPerBatch, indirectCost }),
+        [recipeCostPerUnit, unitsPerBatch, indirectCost]
     );
 
     const validation = useMemo(() => validateProductForm(values), [values]);
