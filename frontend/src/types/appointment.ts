@@ -1,4 +1,5 @@
 export type { MediaItem, MediaType } from './media.ts';
+import type { MediaItem } from './media.ts';
 
 export interface FinancialItem {
   value: number;
@@ -6,35 +7,47 @@ export interface FinancialItem {
   description: string;
 }
 
-export type AppointmentSubStatus = 
-  | 'RASCUNHO' | 'AGUARDANDO_PAGAMENTO' | 'EM_ANALISE' | 'RECUSADO'
-  | 'CONFIRMADO' | 'CHECK_IN' | 'EM_ESPERA' | 'EM_ANDAMENTO' | 'PAUSADO'
-  | 'CONCLUIDO' | 'PARCIAL' | 'NAO_COMPARECEU' | 'REAGENDADO';
+export type AppointmentStatus = 'PENDING' | 'COMPLETED' | 'CANCELED';
+
+export type AppointmentSubStatus =
+  | 'RASCUNHO'
+  | 'AGUARDANDO_PAGAMENTO'
+  | 'EM_ANALISE'
+  | 'RECUSADO'
+  | 'CONFIRMADO'
+  | 'CHECK_IN'
+  | 'EM_ESPERA'
+  | 'EM_ANDAMENTO'
+  | 'PAUSADO'
+  | 'CONCLUIDO'
+  | 'PARCIAL'
+  | 'NAO_COMPARECEU'
+  | 'REAGENDADO';
 
 export interface Appointment {
   id: string;
-  title: string; 
+  title: string;
   time: string;
   position: number;
-  status: 'PENDING' | 'COMPLETED' | 'CANCELED';
+  status: AppointmentStatus;
   subStatus: AppointmentSubStatus;
-  description?: string;
-  medias?: string;      
-  financials?: string;  
+  description: string | null;
+  medias: MediaItem[];
+  financials: FinancialItem[];
   createdAt: string;
   updatedAt: string;
-  firstName?: string;
-  lastName?: string;
-  documentType?: string;
-  documentNumber?: string;
-  phone?: string;
-  email?: string;
-  cep?: string;
-  state?: string;
-  city?: string;
-  neighborhood?: string;
-  street?: string;
-  houseNumber?: string;
-  complement?: string;
-  referencePoint?: string;
+  firstName: string | null;
+  lastName: string | null;
+  documentType: string | null;
+  documentNumber: string | null;
+  phone: string | null;
+  email: string | null;
+  cep: string | null;
+  state: string | null;
+  city: string | null;
+  neighborhood: string | null;
+  street: string | null;
+  houseNumber: string | null;
+  complement: string | null;
+  referencePoint: string | null;
 }

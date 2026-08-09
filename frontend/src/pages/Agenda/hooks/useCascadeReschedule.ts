@@ -1,69 +1,80 @@
-import { useState, useMemo } from 'react';
-import { type Appointment } from '../../../types/appointment.ts';
-import { CustomLogger } from '../../../utils/CustomLogger.ts';
+import { useEffect, useMemo, useState } from 'react';
+import { APP_CONFIG } from '../../../config/app.config.ts';
+import type { Appointment } from '../../../types/appointment.ts';
+import type { AgendaCascadeDirection, AgendaTimeUnit } from '../types/agenda.types.ts';
 
-interface UseCascadeRescheduleProps {
-    isOpen: boolean;
-    targetAppointment: Appointment | null;
-    fullList: Appointment[];
+interface UseCascadeRescheduleOptions {
+  isOpen: boolean;
+  targetAppointment: Appointment | null;
+  droppedIndex: number;
+  fullList: Appointment[];
 }
 
-export function useCascadeReschedule({ isOpen, targetAppointment, fullList }: UseCascadeRescheduleProps) {
-    const [activeTab, setActiveTab] = useState<'POSTERIOR' | 'ANTERIOR'>('POSTERIOR');
-    const [offsetValue, setOffsetValue] = useState<number>(0);
-    const [timeUnit, setTimeUnit] = useState<string>('MINUTES');
-    const [startIndex, setStartIndex] = useState<number>(-1);
-    const [endIndex, setEndIndex] = useState<number>(-1);
+export function useCascadeReschedule({
+  isOpen,
+  targetAppointment,
+  droppedIndex,
+  fullList
+}: UseCascadeRescheduleOptions) {
+  const [actionType, setActionType] = useState<AgendaCascadeDirection>(APP_CONFIG.agenda.defaults.cascadeDirection);
+  const [offsetValue, setOffsetValue] = useState(0);
+  const [timeUnit, setTimeUnit] = useState<AgendaTimeUnit>(APP_CONFIG.agenda.defaults.timeUnit);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-    // 🤖 MOTOR 1: Filtra agendamentos elegíveis ao reagendamento em bloco
-    const candidatesList = useMemo(() => {
-        if (!isOpen || !targetAppointment) return [];
+  const reorderedList = useMemo(() => {
+    if (!targetAppointment) return [...fullList].sort((a, b) => a.position - b.position);
+    const ordered = [...fullList].sort((a, b) => a.position - b.position);
+    const currentIndex = ordered.findIndex((item) => item.id === targetAppointment.id);
+    if (currentIndex < 0) return ordered;
+    const [target] = ordered.splice(currentIndex, 1);
+    if (!target) return ordered;
+    ordered.splice(Math.min(Math.max(0, droppedIndex), ordered.length), 0, target);
+    return ordered;
+  }, [droppedIndex, fullList, targetAppointment]);
 
-        return fullList.filter((apt, idx) => {
-            if (apt.status === 'CANCELED' || apt.status === 'COMPLETED') return false;
-            if (apt.id === targetAppointment.id) return false;
+  const targetIndex = targetAppointment
+    ? reorderedList.findIndex((item) => item.id === targetAppointment.id)
+    : -1;
 
-            // Se for posterior, pega índices maiores que a nova vaga física, se anterior menores
-            const targetIndexInFullList = fullList.findIndex(a => a.id === targetAppointment.id);
-            return activeTab === 'POSTERIOR' ? idx >= targetIndexInFullList : idx < targetIndexInFullList;
-        });
-    }, [fullList, activeTab, targetAppointment, isOpen]);
+  const candidates = useMemo(() => {
+    if (targetIndex < 0) return [];
+    const segment = actionType === 'POSTERIOR'
+      ? reorderedList.slice(targetIndex + 1)
+      : reorderedList.slice(0, targetIndex);
+    return segment.filter((item) => item.status === 'PENDING');
+  }, [actionType, reorderedList, targetIndex]);
 
-    // 🤖 MOTOR 2: Extrai e mapeia em tempo real a lista de IDs contidos no intervalo de clique
-    const affectedIds = useMemo(() => {
-        if (startIndex === -1 || endIndex === -1) return [];
-        const start = Math.min(startIndex, endIndex);
-        const end = Math.max(startIndex, endIndex);
-        const ids = candidatesList.slice(start, end + 1).map(apt => apt.id);
+  useEffect(() => {
+    if (!isOpen) return;
+    setActionType(APP_CONFIG.agenda.defaults.cascadeDirection);
+    setOffsetValue(0);
+    setTimeUnit(APP_CONFIG.agenda.defaults.timeUnit);
+    setSelectedIds([]);
+  }, [droppedIndex, isOpen, targetAppointment?.id]);
 
-        CustomLogger.info(`[Cascade Engine] Intervalo selecionado: ${start} até ${end}. Total de itens impactados: ${ids.length}`);
-        return ids;
-    }, [candidatesList, startIndex, endIndex]);
+  useEffect(() => {
+    const candidateIds = new Set(candidates.map((item) => item.id));
+    setSelectedIds((current) => current.filter((id) => candidateIds.has(id)));
+  }, [candidates]);
 
-    const handleRowClick = (idx: number) => {
-        if (startIndex === -1 || (startIndex !== -1 && endIndex !== -1)) {
-            setStartIndex(idx);
-            setEndIndex(-1);
-        } else {
-            setEndIndex(idx);
-        }
-    };
+  const toggleAppointment = (id: string) => {
+    setSelectedIds((current) => current.includes(id)
+      ? current.filter((currentId) => currentId !== id)
+      : [...current, id]);
+  };
 
-    const isRowSelected = (idx: number) => {
-        if (startIndex === -1) return false;
-        if (endIndex === -1) return idx === startIndex;
-        const start = Math.min(startIndex, endIndex);
-        const end = Math.max(startIndex, endIndex);
-        return idx >= start && idx <= end;
-    };
+  const canSubmit = selectedIds.length > 0 && offsetValue >= APP_CONFIG.agenda.cascade.minOffsetValue;
 
-    const resetSelection = () => {
-        setStartIndex(-1);
-        setEndIndex(-1);
-    };
-
-    return {
-        activeTab, setActiveTab, offsetValue, setOffsetValue, timeUnit, setTimeUnit,
-        candidatesList, affectedIds, handleRowClick, isRowSelected, resetSelection
-    };
+  return {
+    actionType,
+    setActionType,
+    offsetValue,
+    setOffsetValue,
+    timeUnit,
+    setTimeUnit,
+    selectedIds,
+    candidates,
+    toggleAppointment,
+    canSubmit
+  };
 }

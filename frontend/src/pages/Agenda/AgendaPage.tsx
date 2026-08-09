@@ -1,108 +1,114 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Calendar } from 'lucide-react';
-
-// Componentes Universais da Aplicação (Barrel)
-import { UniversalHeaderDashboard, GlobalTopTabs, GlobalFooterNav } from '../../components/index.ts';
-
-// Componentes Especializados do Domínio da Agenda (Pastas Dedicadas)
-import { AppointmentList } from './components/agendaKanban/AppointmentList.tsx';
-import { AppointmentModal } from './components/appointmentWizard/AppointmentModal.tsx';
+import { GlobalFooterNav, GlobalTopTabs, UniversalHeaderDashboard } from '../../components/index.ts';
+import { TEXTS } from '../../i18n/index.ts';
+import { ERP_THEME } from '../../theme/presets.ts';
+import { UI_KEYS } from '../../ui/keys.ts';
 import { AgendaCalendarView } from './components/agendaCalendar/AgendaCalendarView.tsx';
+import { AgendaFilterBar } from './components/AgendaFilterBar.tsx';
+import { AppointmentList } from './components/agendaKanban/AppointmentList.tsx';
 import { AgendaModalsGroup } from './components/AgendaModalsGroup.tsx';
-import { AgendaFilterBar } from './components/AgendaFilterBar.tsx'; // ✨ Novo sub-módulo atômico
-
-// Ganchos de Negócio Reativos (Hooks)
+import { AppointmentModal } from './components/appointmentWizard/AppointmentModal.tsx';
 import { useAgendaActions } from './hooks/useAgendaActions.ts';
 import { useAgendaFilters } from './hooks/useAgendaFilters.ts';
 import { useAgendaMetrics } from './hooks/useAgendaMetrics.ts';
+import type { AgendaViewMode } from './types/agenda.types.ts';
 
 export function AgendaPage() {
-    const [viewMode, setViewMode] = useState<'LIST' | 'CALENDAR'>('LIST');
-    const [showCanceledItems] = useState(true);
+  const [viewMode, setViewMode] = useState<AgendaViewMode>('LIST');
+  const agenda = useAgendaActions();
+  const filters = useAgendaFilters(agenda.appointments);
+  const metrics = useAgendaMetrics(agenda.appointments);
 
-    const actionsState = useAgendaActions();
-    const { activeFilters, setActiveFilters, setCalendarRange, filteredAppointments } =
-        useAgendaFilters(actionsState.appointments, showCanceledItems);
-    const metrics = useAgendaMetrics(actionsState.appointments);
+  return (
+    <div data-ui-key={UI_KEYS.agenda.page} className={ERP_THEME.agenda.page.shell}>
+      <div data-ui-key={UI_KEYS.agenda.header}>
+        <UniversalHeaderDashboard
+          title={TEXTS.agenda.page.title}
+          subtitle={TEXTS.agenda.page.subtitle}
+          subBadge={(
+            <div data-ui-key={UI_KEYS.agenda.liveClock} className={ERP_THEME.agenda.page.subBadge}>
+              <span>{metrics.formattedDate}</span><span className="text-indigo-300">•</span><span>{metrics.formattedTime}</span>
+            </div>
+          )}
+          icon={Calendar}
+          iconColorClass="text-rose-600"
+          backPath="/home"
+          kpiCards={[
+            { label: TEXTS.agenda.page.totalKpi, value: `${metrics.totalAppointments} ${TEXTS.agenda.page.serviceSuffix}`, valueColorClass: 'text-slate-800' },
+            { label: TEXTS.agenda.page.pendingKpi, value: `${metrics.pendingAppointments} ${TEXTS.agenda.page.unitSuffix}`, valueColorClass: 'text-amber-600' },
+            { label: TEXTS.agenda.page.completedKpi, value: `${metrics.completedAppointments} ${TEXTS.agenda.page.unitSuffix}`, valueColorClass: 'text-emerald-600' },
+            { label: TEXTS.agenda.page.canceledKpi, value: `${metrics.canceledAppointments} ${TEXTS.agenda.page.unitSuffix}`, valueColorClass: 'text-rose-600' }
+          ]}
+        />
+      </div>
 
-    useEffect(() => {
-        actionsState.fetchAppointments();
-    }, []);
+      <GlobalTopTabs />
 
-    return (
-        <div className="w-full min-h-screen bg-slate-50/50 pb-24 font-sans select-none tracking-tight antialiased">
-
-            {/* 🔮 Dashboard Header Hidratado com KPIs Analíticos */}
-            <UniversalHeaderDashboard
-                title="Agenda & Horários"
-                subtitle="Grade Operacional e Fluxo de Atendimentos"
-                subBadge={
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 border border-indigo-100/60 px-2.5 py-0.5 rounded-md mt-1 w-fit font-mono tabular-nums">
-                        <span>{metrics.formattedDate}</span>
-                        <span className="text-indigo-300">•</span>
-                        <span>{metrics.formattedTime}</span>
-                    </div>
-                }
-                icon={Calendar}
-                iconColorClass="text-rose-600"
-                backPath="/home"
-                kpiCards={[
-                    { label: 'Total Agendados', value: `${metrics.totalAppointments} serv.`, valueColorClass: 'text-slate-800' },
-                    { label: 'Pendentes', value: `${metrics.pendingAppointments} un.`, valueColorClass: 'text-amber-600' },
-                    { label: 'Realizados', value: `${metrics.completedAppointments} un.`, valueColorClass: 'text-emerald-600' },
-                    { label: 'Cancelados', value: `${metrics.canceledAppointments} un.`, valueColorClass: 'text-rose-600' }
-                ]}
+      <main className={ERP_THEME.agenda.page.main}>
+        {viewMode === 'CALENDAR' ? (
+          <AgendaCalendarView
+            appointments={agenda.appointments}
+            onBack={() => setViewMode('LIST')}
+            onSelectRange={(start, end) => {
+              filters.setCalendarRange({
+                start: new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime(),
+                end: new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).getTime()
+              });
+              filters.setActiveFilters({ ...filters.activeFilters, dateFilter: 'custom' });
+              setViewMode('LIST');
+            }}
+          />
+        ) : (
+          <div className="space-y-4 block w-full">
+            <AgendaFilterBar
+              activeFilters={filters.activeFilters}
+              setActiveFilters={filters.setActiveFilters}
+              onToggleViewMode={() => setViewMode('CALENDAR')}
             />
 
-            <GlobalTopTabs />
+            {agenda.loading ? (
+              <div className={ERP_THEME.agenda.page.loading}>
+                <div className={ERP_THEME.agenda.page.spinner} aria-label={TEXTS.agenda.page.loading} />
+              </div>
+            ) : (
+              <div data-ui-key={UI_KEYS.agenda.list} className="w-full block animate-fadeIn">
+                <AppointmentList
+                  appointments={filters.filteredAppointments}
+                  onDragEnd={agenda.handleDragEnd}
+                  onSwipeRight={(id) => void agenda.actions.cycleStatus(id)}
+                  onSwipeLeft={(appointment) => void agenda.actions.triggerSoftDelete(appointment)}
+                  onLongPress={agenda.actions.openEditModal}
+                  onClick={agenda.actions.openViewModal}
+                  onUpdateSubStatus={agenda.actions.updateSubStatus}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </main>
 
-            {/* ⚙️ Área Central Operacional */}
-            <main className="w-full px-6 md:px-8 mt-5 space-y-4">
-                {viewMode === 'CALENDAR' ? (
-                    <AgendaCalendarView
-                        appointments={actionsState.appointments}
-                        onBack={() => setViewMode('LIST')}
-                        onSelectRange={(start, end) => {
-                            const absoluteStart = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0).getTime();
-                            const absoluteEnd = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999).getTime();
-                            setCalendarRange({ start: absoluteStart, end: absoluteEnd });
-                            setActiveFilters({ ...activeFilters, dateFilter: 'custom' });
-                            setViewMode('LIST');
-                        }}
-                    />
-                ) : (
-                    <div className="space-y-4 block w-full">
-                        {/* ✨ O sub-módulo de filtros enxugou drasticamente as declarações inline daqui! */}
-                        <AgendaFilterBar activeFilters={activeFilters} setActiveFilters={setActiveFilters} onToggleViewMode={() => setViewMode('CALENDAR')} />
-
-                        {actionsState.loading ? (
-                            <div className="flex justify-center items-center py-20 w-full">
-                                <div className="w-7 h-7 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                            </div>
-                        ) : (
-                            <div className="w-full block animate-fadeIn">
-                                <AppointmentList
-                                    appointments={filteredAppointments}
-                                    onDragEnd={actionsState.handleDragEnd}
-                                    onSwipeRight={(id) => actionsState.actions.cycleStatus(id, ['PENDING', 'COMPLETED'], 'CANCELED')}
-                                    onSwipeLeft={actionsState.actions.triggerSoftDelete}
-                                    onLongPress={actionsState.actions.openEditModal}
-                                    onClick={actionsState.actions.openViewModal}
-                                    onUpdateSubStatus={actionsState.actions.updateSubStatus}
-                                />
-                            </div>
-                        )}
-                    </div>
-                )}
-            </main>
-
-            {/* Assistente Avançado Passo a Passo de Criação */}
-            <AppointmentModal onSave={actionsState.handleCreateAppointment} />
-
-            {/* Casulo Unificado de Modais Avançados (Edição, Resumo e Cascata) */}
-            <AgendaModalsGroup {...actionsState} appointments={actionsState.appointments} />
-
-            <GlobalFooterNav />
-        </div>
-    );
+      <AppointmentModal onSave={agenda.handleCreateAppointment} />
+      <AgendaModalsGroup
+        confirmModalOpen={agenda.confirmModalOpen}
+        editModalOpen={agenda.editModalOpen}
+        viewModalOpen={agenda.viewModalOpen}
+        cascadeModalOpen={agenda.cascadeModalOpen}
+        selectedAppointment={agenda.selectedAppointment}
+        cascadeTargetItem={agenda.cascadeTargetItem}
+        cascadeTargetIndex={agenda.cascadeTargetIndex}
+        appointments={agenda.appointments}
+        setConfirmModalOpen={agenda.setConfirmModalOpen}
+        setEditModalOpen={agenda.setEditModalOpen}
+        setViewModalOpen={agenda.setViewModalOpen}
+        setCascadeModalOpen={agenda.setCascadeModalOpen}
+        setSelectedAppointment={agenda.setSelectedAppointment}
+        setCascadeTargetItem={agenda.setCascadeTargetItem}
+        handleUpdateAppointment={agenda.handleUpdateAppointment}
+        handleExecuteCascadeReschedule={agenda.handleExecuteCascadeReschedule}
+        executeConfirmDelete={agenda.actions.executeConfirmDelete}
+      />
+      <GlobalFooterNav />
+    </div>
+  );
 }

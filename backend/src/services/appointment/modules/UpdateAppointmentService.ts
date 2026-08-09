@@ -1,65 +1,29 @@
+import { Prisma } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
-import { type Appointment, Prisma } from '@prisma/client';
+import type { AppointmentResponse, AppointmentUpdateInput } from '../../../contracts/appointment/AppointmentContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-
-interface UpdateRequest {
-  id: string;
-  title: string;
-  time: string;
-  createdAt: string;
-  subStatus?: string;
-  description?: string | null;
-  medias?: any;      // ✨ Sincronizado com o tipo Json do Schema
-  financials?: any;  // ✨ Sincronizado com o tipo Json do Schema
-
-  // Campos opcionais das categorias do Accordion
-  firstName?: string | null;
-  lastName?: string | null;
-  documentType?: string | null;
-  documentNumber?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  cep?: string | null;
-  state?: string | null;
-  city?: string | null;
-  neighborhood?: string | null;
-  street?: string | null;
-  houseNumber?: string | null;
-  complement?: string | null;
-  referencePoint?: string | null;
-}
+import { presentAppointment } from '../../../presenters/appointment/AppointmentPresenter.js';
 
 export class UpdateAppointmentService {
-  async execute(data: UpdateRequest): Promise<Appointment> {
-    CustomLogger.info(`Iniciando atualização completa do agendamento ${data.id}`);
-
-    // ✨ Validação preventiva da data
-    const parsedDate = new Date(data.createdAt);
-    if (isNaN(parsedDate.getTime())) {
-      CustomLogger.error('Data inválida fornecida para atualização', { createdAt: data.createdAt });
-      throw new Error('InvalidDateException');
-    }
+  async execute(data: AppointmentUpdateInput): Promise<AppointmentResponse> {
+    CustomLogger.info(`[Agenda] Updating appointment ${data.id}`);
+    const { id, medias, financials, ...fields } = data;
 
     try {
-      // ✨ Clean Code: Isola o id e o texto da data, jogando o resto das propriedades em 'restOfData'
-      const { id, createdAt, ...restOfData } = data;
-
-      // ✨ Otimização: Executa o update direto economizando uma query no banco
-      return await prismaClient.appointment.update({
+      const updated = await prismaClient.appointment.update({
         where: { id },
         data: {
-          ...restOfData,
-          createdAt: parsedDate,
-        },
+          ...fields,
+          medias: medias as Prisma.InputJsonValue,
+          financials: financials as Prisma.InputJsonValue
+        }
       });
+      return presentAppointment(updated);
     } catch (error) {
-      // ✨ Captura o erro nativo do Prisma para id não encontrado (P2025)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        CustomLogger.warn(`Tentativa de atualização falhou: ID ${data.id} não encontrado`);
         throw new Error('AppointmentNotFoundException');
       }
-
-      CustomLogger.error(`Falha ao atualizar dados do agendamento ${data.id}`, error);
+      CustomLogger.error(`[Agenda] Failed to update appointment ${id}`, error);
       throw error;
     }
   }

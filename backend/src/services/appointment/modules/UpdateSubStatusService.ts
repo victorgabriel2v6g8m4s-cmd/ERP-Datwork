@@ -1,41 +1,26 @@
-import prismaClient from '../../../config/prisma.js';
 import { Prisma } from '@prisma/client';
+import prismaClient from '../../../config/prisma.js';
+import type { AppointmentResponse, AppointmentSubStatus } from '../../../contracts/appointment/AppointmentContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { presentAppointment } from '../../../presenters/appointment/AppointmentPresenter.js';
 
 interface UpdateSubStatusRequest {
-    id: string;
-    subStatus: string;
+  id: string;
+  subStatus: AppointmentSubStatus;
 }
 
 export class UpdateSubStatusService {
-    async execute({ id, subStatus }: UpdateSubStatusRequest) {
-        CustomLogger.info(`Atualizando sub-status do ID: ${id} para: ${subStatus}`);
-
-        // ✨ Validação defensiva simples
-        if (!id || !subStatus) {
-            throw new Error('MissingRequiredFieldsException');
-        }
-
-        try {
-            // ✨ Executa o update otimizado trazendo apenas as colunas necessárias
-            return await prismaClient.appointment.update({
-                where: { id },
-                data: { subStatus },
-                select: {
-                    id: true,
-                    status: true,
-                    subStatus: true
-                }
-            });
-        } catch (error) {
-            // ✨ Captura o erro nativo de registro não encontrado no banco (Código P2025)
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-                CustomLogger.warn(`Tentativa de alteração de sub-status falhou: ID ${id} não encontrado`);
-                throw new Error('AppointmentNotFoundException');
-            }
-
-            CustomLogger.error(`Falha ao alterar sub-status do agendamento ${id}`, error);
-            throw error;
-        }
+  async execute({ id, subStatus }: UpdateSubStatusRequest): Promise<AppointmentResponse> {
+    CustomLogger.info(`[Agenda] Updating sub-status for appointment ${id} to ${subStatus}`);
+    try {
+      const updated = await prismaClient.appointment.update({ where: { id }, data: { subStatus } });
+      return presentAppointment(updated);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new Error('AppointmentNotFoundException');
+      }
+      CustomLogger.error(`[Agenda] Failed to update sub-status for appointment ${id}`, error);
+      throw error;
     }
+  }
 }

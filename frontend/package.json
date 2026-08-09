@@ -10,6 +10,7 @@
     "typecheck:recipes": "tsc -p tsconfig.recipes.json",
     "typecheck:pricing": "tsc -p tsconfig.pricing.json",
     "typecheck:expenses": "tsc -p tsconfig.expenses.json",
+    "typecheck:agenda": "tsc -p tsconfig.agenda.json",
     "build:bundle": "vite build",
     "build": "npm run typecheck && npm run build:bundle",
     "lint": "oxlint",

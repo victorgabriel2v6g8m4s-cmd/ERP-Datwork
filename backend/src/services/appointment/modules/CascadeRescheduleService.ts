@@ -1,91 +1,104 @@
+import { Prisma } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
+import type { AppointmentCascadeInput, AppointmentResponse } from '../../../contracts/appointment/AppointmentContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { presentAppointmentList } from '../../../presenters/appointment/AppointmentPresenter.js';
 
-interface CascadePayload {
-    appointmentIds: string[];
-    offsetValue: number;
-    unit: 'MINUTES' | 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS';
-    newPosition: number;
-    targetId: string;
-    actionType: 'POSTERIOR' | 'ANTERIOR';
+const MILLIS_BY_UNIT = {
+  MINUTES: 60 * 1000,
+  HOURS: 60 * 60 * 1000,
+  DAYS: 24 * 60 * 60 * 1000,
+  WEEKS: 7 * 24 * 60 * 60 * 1000
+} as const;
+
+function shiftAppointmentDateTime(
+  createdAt: Date,
+  time: string,
+  offsetValue: number,
+  unit: AppointmentCascadeInput['unit'],
+  direction: AppointmentCascadeInput['actionType']
+): { createdAt: Date; time: string } {
+  const datePart = createdAt.toISOString().slice(0, 10);
+  const combined = new Date(`${datePart}T${time}:00.000Z`);
+  const signedOffset = direction === 'ANTERIOR' ? -offsetValue : offsetValue;
+
+  if (unit === 'MONTHS') {
+    combined.setUTCMonth(combined.getUTCMonth() + signedOffset);
+  } else {
+    combined.setTime(combined.getTime() + signedOffset * MILLIS_BY_UNIT[unit]);
+  }
+
+  const nextDate = new Date(Date.UTC(
+    combined.getUTCFullYear(),
+    combined.getUTCMonth(),
+    combined.getUTCDate()
+  ));
+  const hours = String(combined.getUTCHours()).padStart(2, '0');
+  const minutes = String(combined.getUTCMinutes()).padStart(2, '0');
+  return { createdAt: nextDate, time: `${hours}:${minutes}` };
 }
 
 export class CascadeRescheduleService {
-    async execute({ appointmentIds, offsetValue, unit, newPosition, targetId, actionType }: CascadePayload) {
-        if (!targetId || appointmentIds.length === 0 || offsetValue <= 0) return;
+  async execute(payload: AppointmentCascadeInput): Promise<AppointmentResponse[]> {
+    CustomLogger.info(`[Agenda] Running ${payload.actionType} cascade for ${payload.appointmentIds.length} appointments`);
 
-        CustomLogger.info(`Iniciando cascata temporal [${actionType}] para o item alvo: ${targetId}`);
+    try {
+      const updatedList = await prismaClient.$transaction(async (tx) => {
+        const ordered = await tx.appointment.findMany({
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }]
+        });
+        const targetIndex = ordered.findIndex((appointment) => appointment.id === payload.targetId);
+        if (targetIndex < 0) throw new Error('AppointmentNotFoundException');
 
-        const unitMap = {
-            MINUTES: 60 * 1000,
-            HOURS: 60 * 60 * 1000,
-            DAYS: 24 * 60 * 60 * 1000,
-            WEEKS: 7 * 24 * 60 * 60 * 1000,
-            MONTHS: 30 * 24 * 60 * 60 * 1000,
-        };
+        const [target] = ordered.splice(targetIndex, 1);
+        if (!target) throw new Error('AppointmentNotFoundException');
+        const destination = Math.min(payload.newPosition, ordered.length);
+        ordered.splice(destination, 0, target);
 
-        const directionSign = actionType === 'ANTERIOR' ? -1 : 1;
-        const totalOffsetMs = offsetValue * unitMap[unit] * directionSign;
+        await Promise.all(ordered.map((appointment, position) => (
+          appointment.position === position
+            ? Promise.resolve()
+            : tx.appointment.update({ where: { id: appointment.id }, data: { position } })
+        )));
 
-        try {
-            return await prismaClient.$transaction(async (tx) => {
-                // 1. Atualiza a nova posição física do item arrastado
-                await tx.appointment.update({
-                    where: { id: targetId },
-                    data: { position: newPosition }
-                });
-
-                // 2. REORDENAÇÃO EM CADEIA OTIMIZADA
-                const allAppointments = await tx.appointment.findMany({
-                    where: { status: { not: 'CANCELED' } },
-                    orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
-                    select: { id: true, position: true } // ✨ Traz apenas o estritamente necessário
-                });
-
-                // ✨ Otimização: Só executa o update se a posição real no banco estiver desalinhada
-                const reorderPromises = allAppointments
-                    .map((apt, index) => {
-                        if (apt.position === index) return null; // Evita queries inúteis
-                        return tx.appointment.update({
-                            where: { id: apt.id },
-                            data: { position: index }
-                        });
-                    })
-                    .filter(Boolean);
-
-                await Promise.all(reorderPromises);
-
-                // 3. DESLOCAMENTO TEMPORAL INTELIGENTE (Batch Fetching)
-                // ✨ Otimização Crítica: Busca todos os alvos de uma vez só fora do loop
-                const targetAppointments = await tx.appointment.findMany({
-                    where: { id: { in: appointmentIds } }
-                });
-
-                const updateTimePromises = targetAppointments.map((appointment) => {
-                    const currentTimestamp = new Date(appointment.createdAt).getTime();
-                    const nextTimestamp = new Date(currentTimestamp + totalOffsetMs);
-                    const isoStringResult = nextTimestamp.toISOString();
-
-                    const formatHours = String(nextTimestamp.getHours()).padStart(2, '0');
-                    const formatMinutes = String(nextTimestamp.getMinutes()).padStart(2, '0');
-                    const nextTimeField = `${formatHours}:${formatMinutes}`;
-
-                    return tx.appointment.update({
-                        where: { id: appointment.id },
-                        data: {
-                            createdAt: isoStringResult,
-                            time: nextTimeField
-                        }
-                    });
-                });
-
-                await Promise.all(updateTimePromises);
-
-                CustomLogger.info(`Cascata finalizada com sucesso. Itens afetados: ${appointmentIds.length}`);
-            });
-        } catch (error) {
-            CustomLogger.error('Falha crítica ao processar o reagendamento em cascata', error);
-            throw error;
+        const affected = await tx.appointment.findMany({
+          where: { id: { in: payload.appointmentIds } }
+        });
+        if (affected.length !== payload.appointmentIds.length) {
+          throw new Error('AppointmentNotFoundException');
         }
+
+        await Promise.all(affected.map((appointment) => {
+          const shifted = shiftAppointmentDateTime(
+            appointment.createdAt,
+            appointment.time,
+            payload.offsetValue,
+            payload.unit,
+            payload.actionType
+          );
+          return tx.appointment.update({
+            where: { id: appointment.id },
+            data: { ...shifted, subStatus: 'REAGENDADO' }
+          });
+        }));
+
+        await tx.appointment.update({
+          where: { id: payload.targetId },
+          data: { subStatus: 'REAGENDADO' }
+        });
+
+        return tx.appointment.findMany({
+          orderBy: [{ position: 'asc' }, { createdAt: 'asc' }]
+        });
+      });
+
+      return presentAppointmentList(updatedList);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new Error('AppointmentNotFoundException');
+      }
+      CustomLogger.error('[Agenda] Cascade reschedule failed', error);
+      throw error;
     }
+  }
 }

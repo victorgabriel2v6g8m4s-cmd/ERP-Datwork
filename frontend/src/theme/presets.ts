@@ -1,3 +1,5 @@
+import { AGENDA_THEME } from './agenda.ts';
+
 export const ERP_THEME = {
     card: {
         base: 'flex items-center justify-between p-4 rounded-2xl shadow-sm border transition-all select-none touch-pan-y',
@@ -132,5 +134,7 @@ export const ERP_THEME = {
             versionButton: 'w-full text-left p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50/50 hover:border-indigo-300 text-slate-600 cursor-pointer transition-all flex items-center justify-between group',
             empty: 'text-center py-12 text-slate-400 font-bold uppercase text-[10px]'
         }
-    }
+    },
+
+    agenda: AGENDA_THEME
 } as const;

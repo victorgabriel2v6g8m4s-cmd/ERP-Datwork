@@ -1,133 +1,188 @@
-import { useState } from 'react';
-import { api } from '../../../api/client.ts';
-import { type Appointment } from '../../../types/appointment.ts';
-import { useGridGestures } from '../../../hooks/useGridGestures.ts';
-import { CustomLogger } from '../../../utils/CustomLogger.ts'
+import { useCallback, useEffect, useState } from 'react';
+import type { DropResult } from '@hello-pangea/dnd';
+import { TEXTS } from '../../../i18n/index.ts';
+import type { Appointment, AppointmentStatus, AppointmentSubStatus } from '../../../types/appointment.ts';
+import { CustomLogger } from '../../../utils/CustomLogger.ts';
+import { agendaService } from '../services/agenda.service.ts';
+import type {
+  AgendaCascadeDirection,
+  AgendaTimeUnit,
+  AppointmentMutationPayload
+} from '../types/agenda.types.ts';
+
+function replaceAppointment(list: Appointment[], updated: Appointment): Appointment[] {
+  return list.map((item) => item.id === updated.id ? updated : item).sort((a, b) => a.position - b.position);
+}
 
 export function useAgendaActions() {
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [cascadeModalOpen, setCascadeModalOpen] = useState(false);
-    const [cascadeTargetIndex, setCascadeDroppedIndex] = useState<number>(0);
-    const [cascadeTargetItem, setCascadeTargetItem] = useState<Appointment | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [cascadeModalOpen, setCascadeModalOpen] = useState(false);
+  const [cascadeTargetIndex, setCascadeTargetIndex] = useState(0);
+  const [cascadeTargetItem, setCascadeTargetItem] = useState<Appointment | null>(null);
 
-    const fetchAppointments = async () => {
-        CustomLogger.info('Carregando grade de agendamentos ativa do banco...');
-        try {
-            const response = await api.get<Appointment[]>('/appointments');
-            const sorted = response.data.sort((a, b) => a.position - b.position);
-            setAppointments(sorted);
-        } catch (error) {
-            CustomLogger.error('Falha na sincronização de dados com o SQLite', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setAppointments(await agendaService.list());
+    } catch (error) {
+      CustomLogger.error(`[Agenda] ${TEXTS.agenda.errors.load}`, error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const {
-        activeItem: selectedAppointment,
-        setActiveItem: setSelectedAppointment,
-        confirmModalOpen,
-        setConfirmModalOpen,
-        editModalOpen,
-        setEditModalOpen,
-        viewModalOpen,
-        setViewModalOpen,
-        actions
-    } = useGridGestures<Appointment>({
-        endpoint: '/appointments',
-        currentList: appointments,
-        setListState: setAppointments,
-        onRefresh: fetchAppointments
-    });
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-    const handleCreateAppointment = async (payload: any) => {
-        CustomLogger.info('Enviando payload do assistente (Wizard) para criação de registro');
-        try {
-            const response = await api.post<Appointment>('/appointments', payload);
-            setAppointments((prev) => [...prev, response.data]);
-            CustomLogger.info(`Agendamento criado com sucesso absoluto. ID: ${response.data.id}`);
-        } catch (error) {
-            CustomLogger.error('Falha ao instanciar novo agendamento no servidor', error);
-        }
-    };
+  const handleCreateAppointment = useCallback(async (payload: AppointmentMutationPayload) => {
+    try {
+      const created = await agendaService.create(payload);
+      setAppointments((current) => [...current, created].sort((a, b) => a.position - b.position));
+    } catch (error) {
+      CustomLogger.error(`[Agenda] ${TEXTS.agenda.errors.create}`, error);
+      throw error;
+    }
+  }, []);
 
-    const handleUpdateAppointment = async (id: string, updatedData: any) => {
-        CustomLogger.info(`Disparando atualização cadastral (Axios PUT) para o ID: ${id}`);
-        try {
-            const response = await api.put<Appointment>(`/appointments/${id}`, updatedData);
-            setAppointments((prev) => prev.map((item) => (item.id === id ? response.data : item)));
-            setEditModalOpen(false);
-            setSelectedAppointment(null);
-            await fetchAppointments();
-            CustomLogger.info(`Mudaça consolidada com sucesso no ID: ${id}`);
-        } catch (error) {
-            CustomLogger.error(`Erro crítico ao atualizar parâmetros do agendamento ${id}`, error);
-        }
-    };
+  const handleUpdateAppointment = useCallback(async (id: string, payload: AppointmentMutationPayload) => {
+    try {
+      const updated = await agendaService.update(id, payload);
+      setAppointments((current) => replaceAppointment(current, updated));
+      setEditModalOpen(false);
+      setSelectedAppointment(null);
+    } catch (error) {
+      CustomLogger.error(`[Agenda] ${TEXTS.agenda.errors.update}`, error);
+      throw error;
+    }
+  }, []);
 
-    const handleDragEnd = async (result: any) => {
-        const { destination, source, draggableId } = result;
-        if (!destination || destination.index === source.index) return;
+  const updateStatus = useCallback(async (id: string, status: AppointmentStatus) => {
+    try {
+      const updated = await agendaService.updateStatus(id, status);
+      setAppointments((current) => replaceAppointment(current, updated));
+    } catch (error) {
+      CustomLogger.error(`[Agenda] ${TEXTS.agenda.errors.status}`, error);
+      throw error;
+    }
+  }, []);
 
-        CustomLogger.info(`Movimentação tátil detectada. Item ${draggableId} movido da vaga ${source.index} para ${destination.index}`);
-        const targetItem = appointments.find(a => a.id === draggableId) || null;
-        setCascadeTargetItem(targetItem);
-        setCascadeDroppedIndex(destination.index);
-        setCascadeModalOpen(true);
-    };
+  const cycleStatus = useCallback(async (id: string) => {
+    const target = appointments.find((item) => item.id === id);
+    if (!target) return;
+    const nextStatus: AppointmentStatus = target.status === 'PENDING' ? 'COMPLETED' : 'PENDING';
+    await updateStatus(id, nextStatus);
+  }, [appointments, updateStatus]);
 
-    const handleExecuteCascadeReschedule = async (selectedIds: string[], offsetValue: number, unit: string) => {
-        CustomLogger.info(`Acionando motor temporal em cascata para ${selectedIds.length} cards afetados`);
-        try {
-            setLoading(true);
-            setAppointments(prev => prev.map(item =>
-                selectedIds.includes(item.id) || item.id === cascadeTargetItem?.id
-                    ? { ...item, subStatus: 'REAGENDADO' }
-                    : item
-            ));
+  const triggerSoftDelete = useCallback(async (appointment: Appointment) => {
+    if (appointment.status === 'CANCELED') {
+      await updateStatus(appointment.id, 'PENDING');
+      return;
+    }
+    setSelectedAppointment(appointment);
+    setConfirmModalOpen(true);
+  }, [updateStatus]);
 
-            await api.patch('/appointments/cascade-reschedule', {
-                appointmentIds: selectedIds,
-                offsetValue,
-                unit,
-                newPosition: cascadeTargetIndex,
-                targetId: cascadeTargetItem?.id,
-                actionType: 'POSTERIOR'
-            });
+  const executeConfirmDelete = useCallback(async () => {
+    if (!selectedAppointment) return;
+    try {
+      await updateStatus(selectedAppointment.id, 'CANCELED');
+      setConfirmModalOpen(false);
+      setSelectedAppointment(null);
+    } catch {
+      // updateStatus already logs the operational failure.
+    }
+  }, [selectedAppointment, updateStatus]);
 
-            setCascadeModalOpen(false);
-            setCascadeTargetItem(null);
-            await fetchAppointments();
-            CustomLogger.info('Reajuste temporal em bloco finalizado com sucesso.');
-        } catch (error) {
-            CustomLogger.error('Erro no processamento da transação em cascata no backend', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const openEditModal = useCallback((appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setEditModalOpen(true);
+  }, []);
 
-    return {
-        appointments,
-        loading,
-        fetchAppointments,
-        selectedAppointment,
-        setSelectedAppointment,
-        confirmModalOpen,
-        setConfirmModalOpen,
-        editModalOpen,
-        setEditModalOpen,
-        viewModalOpen,
-        setViewModalOpen,
-        cascadeModalOpen,
-        setCascadeModalOpen,
-        cascadeTargetIndex,
-        cascadeTargetItem,
-        setCascadeTargetItem,
-        actions,
-        handleCreateAppointment,
-        handleUpdateAppointment,
-        handleDragEnd,
-        handleExecuteCascadeReschedule
-    };
+  const openViewModal = useCallback((appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setViewModalOpen(true);
+  }, []);
+
+  const updateSubStatus = useCallback(async (id: string, subStatus: AppointmentSubStatus) => {
+    try {
+      const updated = await agendaService.updateSubStatus(id, subStatus);
+      setAppointments((current) => replaceAppointment(current, updated));
+    } catch (error) {
+      CustomLogger.error(`[Agenda] ${TEXTS.agenda.errors.subStatus}`, error);
+    }
+  }, []);
+
+  const handleDragEnd = useCallback((result: DropResult) => {
+    const { destination, source, draggableId } = result;
+    if (!destination || destination.index === source.index) return;
+    const target = appointments.find((appointment) => appointment.id === draggableId);
+    if (!target) return;
+    setCascadeTargetItem(target);
+    setCascadeTargetIndex(destination.index);
+    setCascadeModalOpen(true);
+  }, [appointments]);
+
+  const handleExecuteCascadeReschedule = useCallback(async (
+    selectedIds: string[],
+    offsetValue: number,
+    unit: AgendaTimeUnit,
+    actionType: AgendaCascadeDirection
+  ) => {
+    if (!cascadeTargetItem) return;
+    setLoading(true);
+    try {
+      const updated = await agendaService.cascadeReschedule({
+        appointmentIds: selectedIds,
+        offsetValue,
+        unit,
+        newPosition: cascadeTargetIndex,
+        targetId: cascadeTargetItem.id,
+        actionType
+      });
+      setAppointments(updated);
+      setCascadeModalOpen(false);
+      setCascadeTargetItem(null);
+    } catch (error) {
+      CustomLogger.error(`[Agenda] ${TEXTS.agenda.errors.cascade}`, error);
+    } finally {
+      setLoading(false);
+    }
+  }, [cascadeTargetIndex, cascadeTargetItem]);
+
+  return {
+    appointments,
+    loading,
+    reload: load,
+    selectedAppointment,
+    setSelectedAppointment,
+    confirmModalOpen,
+    setConfirmModalOpen,
+    editModalOpen,
+    setEditModalOpen,
+    viewModalOpen,
+    setViewModalOpen,
+    cascadeModalOpen,
+    setCascadeModalOpen,
+    cascadeTargetIndex,
+    cascadeTargetItem,
+    setCascadeTargetItem,
+    actions: {
+      cycleStatus,
+      triggerSoftDelete,
+      executeConfirmDelete,
+      openEditModal,
+      openViewModal,
+      updateSubStatus
+    },
+    handleCreateAppointment,
+    handleUpdateAppointment,
+    handleDragEnd,
+    handleExecuteCascadeReschedule
+  };
 }

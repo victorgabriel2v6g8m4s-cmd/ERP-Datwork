@@ -1,35 +1,23 @@
+import { AppointmentStatus, Prisma } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
-import { type Appointment, AppointmentStatus, Prisma } from '@prisma/client';
+import type { AppointmentResponse } from '../../../contracts/appointment/AppointmentContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-
-interface DeleteRequest {
-  id: string;
-}
+import { presentAppointment } from '../../../presenters/appointment/AppointmentPresenter.js';
 
 export class DeleteAppointmentService {
-  async execute({ id }: DeleteRequest): Promise<Appointment> {
-    CustomLogger.info(`Solicitação de cancelamento seguro para o ID: ${id}`);
-
+  async execute({ id }: { id: string }): Promise<AppointmentResponse> {
+    CustomLogger.info(`[Agenda] Soft-canceling appointment ${id}`);
     try {
-      // ✨ Otimização: Tenta atualizar diretamente sem fazer um "find" prévio
-      // Nota: Certifique-se de que "CANCELED" foi adicionado ao enum AppointmentStatus do seu schema.prisma
-      const canceledAppointment = await prismaClient.appointment.update({
+      const updated = await prismaClient.appointment.update({
         where: { id },
-        data: {
-          status: AppointmentStatus.CANCELED // ✨ Uso do Enum estrito do Prisma
-        }
+        data: { status: AppointmentStatus.CANCELED }
       });
-
-      CustomLogger.info(`Agendamento ${id} marcado como CANCELADO com sucesso`);
-      return canceledAppointment;
+      return presentAppointment(updated);
     } catch (error) {
-      // ✨ Captura erro nativo do Prisma para registros não encontrados (Código P2025)
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-        CustomLogger.warn(`Tentativa de cancelamento falhou: ID ${id} não encontrado`);
         throw new Error('AppointmentNotFoundException');
       }
-
-      CustomLogger.error(`Erro ao aplicar cancelamento seguro no registro ${id}`, error);
+      CustomLogger.error(`[Agenda] Failed to cancel appointment ${id}`, error);
       throw error;
     }
   }

@@ -20,6 +20,13 @@ export const APP_CONFIG = {
         versions: '/expenses/versions',
         status: (id: string) => `/expenses/${encodeURIComponent(id)}/status`,
         restoreVersion: (versionId: string) => `/expenses/versions/${encodeURIComponent(versionId)}/restore`
+      },
+      agenda: {
+        appointments: '/appointments',
+        appointment: (id: string) => `/appointments/${encodeURIComponent(id)}`,
+        status: (id: string) => `/appointments/${encodeURIComponent(id)}/status`,
+        subStatus: (id: string) => `/appointments/${encodeURIComponent(id)}/sub-status`,
+        cascadeReschedule: '/appointments/cascade-reschedule'
       }
     }
   },
@@ -76,6 +83,39 @@ export const APP_CONFIG = {
     routes: {
       fixed: '/despesas/custos-fixos',
       variable: '/despesas/variaveis'
+    }
+  },
+  agenda: {
+    defaults: {
+      subStatus: 'CONFIRMADO',
+      documentType: 'CPF',
+      timeUnit: 'MINUTES',
+      cascadeDirection: 'POSTERIOR'
+    },
+    subStatusGroups: {
+      INITIAL_PAYMENT: ['RASCUNHO', 'AGUARDANDO_PAGAMENTO', 'EM_ANALISE', 'RECUSADO'],
+      EXECUTION: ['CONFIRMADO', 'CHECK_IN', 'EM_ESPERA', 'EM_ANDAMENTO', 'PAUSADO'],
+      FINAL_EXCEPTION: ['CONCLUIDO', 'PARCIAL', 'NAO_COMPARECEU', 'REAGENDADO']
+    },
+    interactions: {
+      swipeActionThresholdPx: 150,
+      swipeOpacityThresholdPx: 100,
+      movementCancelThresholdPx: 5,
+      longPressDelayMs: 800,
+      clickDelayMs: 150,
+      metricsClockIntervalMs: 1000
+    },
+    cascade: {
+      minOffsetValue: 1
+    },
+    calendar: {
+      initialPastMonths: 6,
+      initialFutureMonths: 6,
+      bufferExpansionMonths: 4,
+      bottomLoadThresholdPx: 150,
+      topLoadThresholdPx: 80,
+      availableYearsBefore: 3,
+      availableYearsAfter: 3
     }
   }
 } as const;

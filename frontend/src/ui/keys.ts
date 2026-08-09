@@ -62,10 +62,46 @@ export const UI_KEYS = {
     historyTitle: 'expenses.history.title',
     historyVersion: 'expenses.history.version',
     historyClose: 'expenses.history.close'
+  },
+  agenda: {
+    page: 'agenda.page',
+    header: 'agenda.header',
+    liveClock: 'agenda.header.liveClock',
+    filters: 'agenda.filters',
+    calendarAction: 'agenda.actions.calendar',
+    statusFilter: 'agenda.filters.status',
+    dateFilter: 'agenda.filters.date',
+    list: 'agenda.list',
+    card: 'agenda.card',
+    cardTitle: 'agenda.card.title',
+    cardStatus: 'agenda.card.status',
+    cardSubStatus: 'agenda.card.subStatus',
+    cardBalance: 'agenda.card.balance',
+    createAction: 'agenda.actions.create',
+    createModal: 'agenda.modal.create',
+    wizardTitle: 'agenda.wizard.title',
+    wizardStep: 'agenda.wizard.step',
+    formTitle: 'agenda.form.title',
+    formDate: 'agenda.form.date',
+    formTime: 'agenda.form.time',
+    formNotes: 'agenda.form.notes',
+    formSubStatus: 'agenda.form.subStatus',
+    editModal: 'agenda.modal.edit',
+    editSubmit: 'agenda.form.submit',
+    viewModal: 'agenda.modal.view',
+    viewSubStatus: 'agenda.view.subStatus',
+    calendar: 'agenda.calendar',
+    calendarRangeAction: 'agenda.calendar.rangeAction',
+    cancelDialog: 'agenda.dialog.cancel',
+    cascadeModal: 'agenda.modal.cascade',
+    cascadeOffset: 'agenda.cascade.offset',
+    cascadeUnit: 'agenda.cascade.unit',
+    cascadeSubmit: 'agenda.cascade.submit'
   }
 } as const;
 
 export type UiKey =
   | typeof UI_KEYS.recipes[keyof typeof UI_KEYS.recipes]
   | typeof UI_KEYS.pricing[keyof typeof UI_KEYS.pricing]
-  | typeof UI_KEYS.expenses[keyof typeof UI_KEYS.expenses];
+  | typeof UI_KEYS.expenses[keyof typeof UI_KEYS.expenses]
+  | typeof UI_KEYS.agenda[keyof typeof UI_KEYS.agenda];
