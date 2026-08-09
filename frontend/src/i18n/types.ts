@@ -166,6 +166,64 @@ export interface AppTextDictionary {
       description: string;
     };
   };
+  expenses: {
+    page: {
+      title: string;
+      subtitle: string;
+      fixedCostKpi: string;
+      variableExpensesKpi: string;
+      totalTab: (value: string) => string;
+      loading: string;
+      emptyState: string;
+    };
+    tabs: {
+      fixed: string;
+      variable: string;
+    };
+    search: {
+      placeholder: string;
+    };
+    columns: {
+      name: string;
+      value: string;
+      valueType: string;
+      representation: string;
+      actions: string;
+    };
+    fields: {
+      namePlaceholder: string;
+      valuePlaceholder: string;
+      literal: string;
+      percent: string;
+    };
+    sync: {
+      saving: string;
+      saved: string;
+      error: string;
+    };
+    actions: {
+      history: string;
+      historyTitle: string;
+      delete: string;
+      deleteTitle: string;
+    };
+    history: {
+      title: string;
+      subtitle: string;
+      loading: string;
+      empty: string;
+      versionLabel: (version: number) => string;
+      restoreTitle: string;
+    };
+    errors: {
+      load: string;
+      save: string;
+      delete: string;
+      history: string;
+      restore: string;
+      invalidResponse: string;
+    };
+  };
   orderProfiles: {
     title: string;
     applyHint: string;

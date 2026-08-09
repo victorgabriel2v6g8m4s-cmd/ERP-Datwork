@@ -43,9 +43,29 @@ export const UI_KEYS = {
     productFixedCosts: 'pricing.products.includeFixedCosts',
     syncStatus: 'pricing.products.syncStatus',
     servicesPlaceholder: 'pricing.services.placeholder'
+  },
+  expenses: {
+    page: 'expenses.page',
+    header: 'expenses.header',
+    syncStatus: 'expenses.syncStatus',
+    totalBadge: 'expenses.totalBadge',
+    historyAction: 'expenses.actions.history',
+    subTabs: 'expenses.subTabs',
+    search: 'expenses.search',
+    table: 'expenses.table',
+    nameInput: 'expenses.row.name',
+    valueInput: 'expenses.row.value',
+    valueTypeSelect: 'expenses.row.valueType',
+    representation: 'expenses.row.representation',
+    deleteAction: 'expenses.row.delete',
+    historyModal: 'expenses.history.modal',
+    historyTitle: 'expenses.history.title',
+    historyVersion: 'expenses.history.version',
+    historyClose: 'expenses.history.close'
   }
 } as const;
 
 export type UiKey =
   | typeof UI_KEYS.recipes[keyof typeof UI_KEYS.recipes]
-  | typeof UI_KEYS.pricing[keyof typeof UI_KEYS.pricing];
+  | typeof UI_KEYS.pricing[keyof typeof UI_KEYS.pricing]
+  | typeof UI_KEYS.expenses[keyof typeof UI_KEYS.expenses];

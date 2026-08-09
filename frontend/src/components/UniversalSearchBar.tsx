@@ -11,7 +11,7 @@ export interface UniversalFilters {
 }
 
 interface UniversalSearchBarProps {
-    type: 'products' | 'recipes' | 'ingredients' | 'agenda';
+    type: 'products' | 'recipes' | 'ingredients' | 'agenda' | 'expenses';
     filters: any;
     onFilterChange: (filters: any) => void;
     orderProfiles?: any[];
@@ -38,6 +38,7 @@ export function UniversalSearchBar({
     const [isExpanded, setIsExpanded] = useState(false);
     const isProducts = type === 'products';
     const isRecipes = type === 'recipes';
+    const isExpenses = type === 'expenses';
 
     const updateFilter = (field: string, value: any) => {
         onFilterChange({ ...filters, [field]: value });
@@ -107,12 +108,16 @@ export function UniversalSearchBar({
                                         </>
                                     ) : (
                                         <option value="value">
-                                            {isProducts ? 'Custo total unitário (Maior)' : 'Preço de custo (Maior)'}
+                                            {isProducts
+                                                ? 'Custo total unitário (Maior)'
+                                                : isExpenses
+                                                    ? 'Valor (Maior para Menor)'
+                                                    : 'Preço de custo (Maior)'}
                                         </option>
                                     )}
 
                                     {isProducts && <option value="rating">Avaliações e Notas (Melhores)</option>}
-                                    {!isRecipes && orderProfiles?.map((profile) => (
+                                    {!isRecipes && !isExpenses && orderProfiles?.map((profile) => (
                                         <option key={profile.id} value={`profile-${profile.id}`}>
                                             Perfil: {profile.name}
                                         </option>
@@ -120,7 +125,7 @@ export function UniversalSearchBar({
                                 </select>
                             </div>
 
-                            {!isRecipes && (
+                            {!isRecipes && !isExpenses && (
                                 <div className="space-y-1.5 flex-1 min-w-[240px] w-full">
                                     <div className="flex items-center justify-between">
                                         <label className="font-bold text-slate-500 uppercase text-[10px] tracking-wider flex items-center gap-1">
@@ -185,7 +190,7 @@ export function UniversalSearchBar({
                             )}
                         </div>
 
-                        {type !== 'recipes' && (
+                        {type !== 'recipes' && type !== 'expenses' && (
                             <div className="flex gap-2 items-center flex-wrap w-full md:w-auto shrink-0 justify-end">
                                 <OrderProfilesManager
                                     profiles={orderProfiles || []}

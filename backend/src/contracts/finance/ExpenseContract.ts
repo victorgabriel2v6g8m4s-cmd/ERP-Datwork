@@ -2,7 +2,7 @@ export type ExpenseValueType = 'LITERAL' | 'PERCENT';
 export type ExpenseCategory = 'FIXED' | 'VARIABLE';
 export type ExpenseStatus = 'ACTIVE' | 'INACTIVE';
 
-export interface Expense {
+export interface ExpenseResponse {
   id: string;
   name: string;
   value: number;
@@ -22,17 +22,17 @@ export interface ExpenseMutationInput {
   category: ExpenseCategory;
 }
 
-export interface ExpenseMetrics {
+export interface ExpenseMetricsResponse {
   fixedCostPerUnitFactor: number;
   totalVariablePercent: number;
 }
 
-export interface ExpensesOverview extends ExpenseMetrics {
-  expenses: Expense[];
+export interface ExpensesOverviewResponse extends ExpenseMetricsResponse {
+  expenses: ExpenseResponse[];
 }
 
-export interface ExpenseVersion {
+export interface ExpenseVersionResponse {
   id: string;
-  snapshotData: Expense[];
+  snapshotData: ExpenseResponse[];
   versionDate: string;
 }

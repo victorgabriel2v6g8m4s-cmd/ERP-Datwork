@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.expenses.tsbuildinfo"
+  },
+  "include": [
+    "src/pages/Expenses/**/*.ts",
+    "src/pages/Expenses/**/*.tsx"
+  ]
+}

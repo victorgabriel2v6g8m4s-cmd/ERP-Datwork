@@ -168,6 +168,64 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       description: 'Estrutura preparada para receber o módulo de serviços.'
     }
   },
+  expenses: {
+    page: {
+      title: 'Despesas Operacionais',
+      subtitle: 'Centro de Custo & Margens de Planejamento',
+      fixedCostKpi: 'Rateio Fixo Un.',
+      variableExpensesKpi: 'Desp. Variáveis',
+      totalTab: (value) => `Total Aba: ${value}`,
+      loading: 'Carregando centro de custos...',
+      emptyState: 'Nenhuma despesa ativa vinculada a esta categoria.'
+    },
+    tabs: {
+      fixed: 'Custos Fixos',
+      variable: 'Despesas Variáveis'
+    },
+    search: {
+      placeholder: 'Buscar despesa pelo nome...'
+    },
+    columns: {
+      name: 'Nome da Despesa / Canal',
+      value: 'Valor Bruto',
+      valueType: 'Tipo de Entrada',
+      representation: 'Representação (%)',
+      actions: 'Ações'
+    },
+    fields: {
+      namePlaceholder: 'Nome da despesa...',
+      valuePlaceholder: '0.00',
+      literal: 'Literal (R$)',
+      percent: 'Porcentagem (%)'
+    },
+    sync: {
+      saving: 'Gravando...',
+      saved: 'Sincronizado',
+      error: 'Falha na sincronização'
+    },
+    actions: {
+      history: 'Histórico',
+      historyTitle: 'Abrir histórico de auditoria',
+      delete: 'Excluir',
+      deleteTitle: 'Excluir despesa'
+    },
+    history: {
+      title: 'Versões da Planilha',
+      subtitle: 'Logs Cronológicos Retroativos',
+      loading: 'Carregando logs de auditoria...',
+      empty: 'Nenhum histórico gerado ainda.',
+      versionLabel: (version) => `Backup V${version}`,
+      restoreTitle: 'Restaurar esta versão'
+    },
+    errors: {
+      load: 'Não foi possível carregar o centro de custos.',
+      save: 'Não foi possível salvar as despesas.',
+      delete: 'Não foi possível excluir a despesa.',
+      history: 'Não foi possível carregar o histórico de despesas.',
+      restore: 'Não foi possível restaurar a versão selecionada.',
+      invalidResponse: 'O servidor retornou dados de despesas em formato inválido.'
+    }
+  },
   orderProfiles: {
     title: 'Perfis de Ordenação Customizados',
     applyHint: 'Clique para aplicar. Botão direito ou segure para renomear.',

@@ -14,6 +14,12 @@ export const APP_CONFIG = {
       pricing: {
         products: '/pricing/products',
         settings: '/settings'
+      },
+      expenses: {
+        overview: '/expenses',
+        versions: '/expenses/versions',
+        status: (id: string) => `/expenses/${encodeURIComponent(id)}/status`,
+        restoreVersion: (versionId: string) => `/expenses/versions/${encodeURIComponent(versionId)}/restore`
       }
     }
   },
@@ -54,6 +60,22 @@ export const APP_CONFIG = {
     },
     interactions: {
       productSaveDebounceMs: 800
+    }
+  },
+  expenses: {
+    defaults: {
+      category: 'FIXED',
+      valueType: 'LITERAL'
+    },
+    limits: {
+      minValue: 0
+    },
+    interactions: {
+      autosaveDebounceMs: 800
+    },
+    routes: {
+      fixed: '/despesas/custos-fixos',
+      variable: '/despesas/variaveis'
     }
   }
 } as const;

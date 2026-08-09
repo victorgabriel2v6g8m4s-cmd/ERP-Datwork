@@ -55,6 +55,9 @@ jobs:
       - name: Typecheck Pricing module
         run: npm run typecheck:pricing
 
+      - name: Typecheck Expenses module
+        run: npm run typecheck:expenses
+
       - name: Lint frontend
         run: npm run lint
         continue-on-error: true
@@ -66,7 +69,7 @@ jobs:
 
       - name: Report TypeScript debt
         if: steps.frontend-typecheck.outcome == 'failure'
-        run: echo '::warning::Full frontend TypeScript validation still contains legacy debt. Shared code, Recipes and Pricing are enforced separately.'
+        run: echo '::warning::Full frontend TypeScript validation still contains legacy debt. Shared code, Recipes, Pricing and Expenses are enforced separately.'
 
       - name: Build frontend bundle
         run: npm run build:bundle

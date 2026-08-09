@@ -103,5 +103,34 @@ export const ERP_THEME = {
         services: {
             placeholder: 'space-y-2 text-center py-10'
         }
+    },
+
+    expenses: {
+        page: {
+            shell: 'w-full min-h-screen bg-slate-50/50 pb-24 font-sans selection:bg-indigo-500/10 select-none',
+            main: 'w-full px-6 mx-auto mt-5 space-y-4',
+            loading: 'text-center py-12 text-slate-400 font-bold animate-pulse',
+            totalBadge: 'text-[9px] font-black text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded w-fit border border-slate-200/60 font-mono'
+        },
+        table: {
+            nameInput: 'w-full bg-transparent border border-transparent rounded-lg font-black text-slate-800 focus:outline-none focus:bg-slate-50 focus:border-slate-200 text-xs sm:text-sm',
+            valueInput: 'w-full max-w-[95px] mx-auto px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-center font-black text-slate-800 focus:outline-none focus:bg-white focus:border-indigo-500 tabular-nums text-xs',
+            valueTypeSelect: 'px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-600 text-[10px] focus:outline-none cursor-pointer',
+            representation: 'font-black text-slate-400 font-mono tracking-tight tabular-nums block text-center w-full',
+            deleteButton: 'text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors block mx-auto'
+        },
+        sync: {
+            saving: 'text-[10px] font-bold text-amber-600 flex items-center gap-0.5 animate-pulse',
+            saved: 'text-[10px] font-bold text-emerald-600 flex items-center gap-0.5',
+            error: 'text-[10px] font-bold text-rose-600 flex items-center gap-0.5'
+        },
+        history: {
+            overlay: 'fixed inset-0 z-50 flex items-center justify-end p-0 bg-black/40 backdrop-blur-xs font-sans text-xs',
+            panel: 'w-full max-w-sm bg-white h-screen shadow-2xl p-5 border-l border-slate-100 flex flex-col space-y-4',
+            header: 'flex items-center justify-between border-b border-slate-100 pb-3 shrink-0',
+            closeButton: 'p-1.5 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-full cursor-pointer',
+            versionButton: 'w-full text-left p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50/50 hover:border-indigo-300 text-slate-600 cursor-pointer transition-all flex items-center justify-between group',
+            empty: 'text-center py-12 text-slate-400 font-bold uppercase text-[10px]'
+        }
     }
 } as const;

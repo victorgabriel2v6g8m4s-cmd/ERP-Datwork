@@ -1,28 +1,34 @@
-import { type Request, type Response } from 'express';
-// 🌟 Acoplamento direto com a instância centralizadora de serviços do módulo de finanças
-import { financeService } from '../../../services/finance/FinanceServiceHandler.js';
+import type { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { financeService } from '../../../services/finance/FinanceServiceHandler.js';
+import {
+  ExpenseRequestValidationError,
+  parseExpenseMutationList
+} from '../utils/ExpenseRequestValidator.js';
 
 export class SaveExpensesController {
-    async handle(req: Request, res: Response): Promise<Response> {
-        CustomLogger.info('Recebendo requisição HTTP para consolidação e salvamento de planilha financeira em lote');
+  async handle(req: Request, res: Response): Promise<Response> {
+    try {
+      const body = req.body as unknown;
+      const expenses = typeof body === 'object' && body !== null && 'expenses' in body
+        ? (body as { expenses?: unknown }).expenses
+        : undefined;
+      const payload = parseExpenseMutationList(expenses);
+      return res.status(200).json(await financeService.saveExpenses.execute(payload));
+    } catch (error) {
+      if (error instanceof ExpenseRequestValidationError) {
+        CustomLogger.warn(`[Expenses] Bulk save rejected for ${error.field}: ${error.message}`);
+        return res.status(400).json({ error: error.message, field: error.field });
+      }
 
-        const { expenses } = req.body;
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        CustomLogger.warn('[Expenses] Bulk save referenced an expense that no longer exists');
+        return res.status(409).json({ error: 'Uma despesa foi alterada ou removida por outra operação. Recarregue os dados.' });
+      }
 
-        // Validação defensiva precoce na camada HTTP antes de abrir conexão com o banco
-        if (!expenses || !Array.isArray(expenses)) {
-            CustomLogger.warn('Tentativa de persistência financeira rejeitada: payload em lote ausente ou malformatado');
-            return res.status(400).json({ error: 'O payload de despesas em lote é obrigatório e deve ser um array estruturado.' });
-        }
-
-        try {
-            // ✨ Otimização: Consome diretamente a instância unificada, sem o "new" manual
-            const updatedExpensesList = await financeService.saveExpenses.execute(expenses);
-
-            return res.status(200).json(updatedExpensesList);
-        } catch (error) {
-            CustomLogger.error('Erro crítico não tratado ao persistir lote de despesas operacionais na camada HTTP', error);
-            return res.status(500).json({ error: 'Internal Server Error ao salvar as alterações financeiras.' });
-        }
+      CustomLogger.error('[Expenses] Failed to persist expense ledger', error);
+      return res.status(500).json({ error: 'Erro interno ao salvar o centro de custos.' });
     }
+  }
 }
