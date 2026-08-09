@@ -83,6 +83,9 @@ export function useGridGestures<T extends { id: string; status: string; position
         const target = typeof itemOrId === 'string' ? currentList.find(i => i.id === itemOrId) : itemOrId;
         if (!target) return;
 
+        // Mantido por compatibilidade com a assinatura pública atual do hook.
+        void sequence;
+
         let nextStatus = 'PENDING';
 
         if (target.status === 'PENDING' || target.status === 'SCHEDULED' || target.status === 'ACTIVE') {
