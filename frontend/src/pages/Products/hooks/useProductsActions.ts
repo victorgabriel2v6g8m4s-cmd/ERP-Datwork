@@ -53,7 +53,8 @@ export function useProductsActions() {
         currentList: products,
         setListState: setProducts,
         onRefresh: fetchProducts,
-        skipConfirmDelete: true
+        skipConfirmDelete: true,
+        refreshAfterSoftDelete: false
     });
 
     const handleCreateProduct = async (payload: unknown) => {
