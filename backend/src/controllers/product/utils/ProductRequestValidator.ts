@@ -1,6 +1,5 @@
 import { AbcCategory, CostInclusion, Prisma } from '@prisma/client';
-
-type ProductMediaType = 'image' | 'video' | 'document';
+import { type ProductMediaType } from '../../../contracts/product/ProductContract.js';
 
 export class ProductRequestValidationError extends Error {
     constructor(

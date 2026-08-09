@@ -1,5 +1,5 @@
 import { api } from '../api/client.ts';
-import { type MediaItem } from '../types/appointment.ts';
+import { type MediaItem } from '../types/media.ts';
 import { CustomLogger } from './CustomLogger.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {

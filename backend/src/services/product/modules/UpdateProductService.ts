@@ -1,25 +1,12 @@
 import prismaClient from '../../../config/prisma.js';
 import { PricingEngine } from '../../../math/PricingEngine.js';
-import { AbcCategory, CostInclusion, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-
-export interface UpdateProductRequest {
-    id: string;
-    sku?: string;
-    name?: string;
-    brand?: string | null;
-    variation?: string | null;
-    description?: string | null;
-    thumbnail?: string | null;
-    medias?: Prisma.InputJsonValue;
-    indirectCost?: number;
-    abcCategory?: AbcCategory;
-    includeFixedCosts?: CostInclusion;
-    finalPrice?: number;
-}
+import { type ProductResponse, type UpdateProductRequest } from '../../../contracts/product/ProductContract.js';
+import { presentProduct } from '../../../presenters/product/ProductPresenter.js';
 
 export class UpdateProductService {
-    async execute(data: UpdateProductRequest) {
+    async execute(data: UpdateProductRequest): Promise<ProductResponse> {
         CustomLogger.info(`Iniciando solicitação de atualização do produto ID: ${data.id}`);
 
         if (data.sku) {
@@ -49,7 +36,7 @@ export class UpdateProductService {
             if (data.indirectCost !== undefined) updateData.indirectCost = data.indirectCost;
             if (data.finalPrice !== undefined) updateData.finalPrice = data.finalPrice;
 
-            const updatedProduct = await prismaClient.product.update({
+            await prismaClient.product.update({
                 where: { id: data.id },
                 data: updateData
             });
@@ -57,7 +44,21 @@ export class UpdateProductService {
             CustomLogger.info(`Produto ${data.id} atualizado com sucesso. Disparando motor de precificação.`);
             await PricingEngine.recalculateAll();
 
-            return updatedProduct;
+            const synchronizedProduct = await prismaClient.product.findUnique({
+                where: { id: data.id },
+                include: {
+                    recipe: {
+                        select: { unitsPerBatch: true }
+                    }
+                }
+            });
+
+            if (!synchronizedProduct) {
+                CustomLogger.warn(`Produto ${data.id} desapareceu antes da leitura pós-recálculo`);
+                throw new Error('ProductNotFoundException');
+            }
+
+            return presentProduct(synchronizedProduct);
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
                 CustomLogger.warn(`Falha na atualização: Produto ID ${data.id} não encontrado`);

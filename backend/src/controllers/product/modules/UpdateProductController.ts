@@ -1,6 +1,6 @@
 import { type Request, type Response } from 'express';
 import { productService } from '../../../services/product/ProductServiceHandler.js';
-import { type UpdateProductRequest } from '../../../services/product/modules/UpdateProductService.js';
+import { type UpdateProductRequest } from '../../../contracts/product/ProductContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
 import {
   ProductRequestValidationError,

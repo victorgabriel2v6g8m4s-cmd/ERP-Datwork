@@ -1,9 +1,4 @@
-export interface MediaItem {
-  id: string;
-  name: string;
-  url: string;
-  type: 'image' | 'video' | 'document';
-}
+export type { MediaItem, MediaType } from './media.ts';
 
 export interface FinancialItem {
   value: number;

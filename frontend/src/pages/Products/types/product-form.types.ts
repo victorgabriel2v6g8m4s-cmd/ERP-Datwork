@@ -1,7 +1,11 @@
-import type { MediaItem } from '../../../types/appointment.ts';
+import type { MediaItem } from '../../../types/media.ts';
+import type {
+    ProductAbcCategory,
+    ProductCostInclusion,
+    ProductMutationInput
+} from '../../../types/product.ts';
 
-export type ProductAbcCategory = 'A' | 'B' | 'C';
-export type ProductCostInclusion = 'YES' | 'NO' | 'DEFAULT';
+export type { ProductAbcCategory, ProductCostInclusion } from '../../../types/product.ts';
 
 export interface ProductFormValues {
     sku: string;
@@ -24,19 +28,7 @@ export interface ProductCostPreview {
     baseUnitCost: number;
 }
 
-export interface ProductMutationPayload {
-    sku: string;
-    name: string;
-    brand: string;
-    variation: string | null;
-    description: string | null;
-    indirectCost: number;
-    finalPrice: number;
-    abcCategory: ProductAbcCategory;
-    includeFixedCosts: ProductCostInclusion;
-    thumbnail: string | null;
-    medias: MediaItem[];
-}
+export type ProductMutationPayload = ProductMutationInput;
 
 export type ProductFormField = 'sku' | 'name' | 'indirectCost' | 'finalPrice';
 

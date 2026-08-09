@@ -1,20 +1,8 @@
 import prismaClient from '../../../config/prisma.js';
-import { AbcCategory, CostInclusion, Prisma, ProductStatus } from '@prisma/client';
+import { AbcCategory, CostInclusion, ProductStatus } from '@prisma/client';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-
-export interface CreateProductRequest {
-    sku: string;
-    name: string;
-    brand?: string | null;
-    variation?: string | null;
-    thumbnail?: string | null;
-    description?: string | null;
-    medias?: Prisma.InputJsonValue;
-    indirectCost?: number;
-    finalPrice?: number;
-    abcCategory?: AbcCategory;
-    includeFixedCosts?: CostInclusion;
-}
+import { type CreateProductRequest, type ProductResponse } from '../../../contracts/product/ProductContract.js';
+import { presentProduct } from '../../../presenters/product/ProductPresenter.js';
 
 export class CreateProductService {
     async execute({
@@ -29,7 +17,7 @@ export class CreateProductService {
         finalPrice,
         abcCategory,
         includeFixedCosts
-    }: CreateProductRequest) {
+    }: CreateProductRequest): Promise<ProductResponse> {
         CustomLogger.info('Iniciando cadastro de novo produto', { sku, name });
 
         const skuExists = await prismaClient.product.findUnique({
@@ -43,7 +31,7 @@ export class CreateProductService {
         }
 
         try {
-            return await prismaClient.$transaction(async (tx) => {
+            const createdProduct = await prismaClient.$transaction(async (tx) => {
                 const lastProduct = await tx.product.findFirst({
                     orderBy: { position: 'desc' },
                     select: { position: true }
@@ -52,7 +40,7 @@ export class CreateProductService {
                 const nextPosition = lastProduct ? lastProduct.position + 1 : 0;
                 const computedIndirectCost = indirectCost ?? 0;
 
-                return await tx.product.create({
+                return tx.product.create({
                     data: {
                         sku,
                         name,
@@ -74,6 +62,8 @@ export class CreateProductService {
                     }
                 });
             });
+
+            return presentProduct(createdProduct);
         } catch (error) {
             CustomLogger.error('Falha ao registrar novo produto no banco de dados', error);
             throw error;

@@ -1,6 +1,6 @@
 import { Plus, X, FileText } from 'lucide-react';
 import { type ChangeEvent } from 'react';
-import { type MediaItem } from '../types/appointment.ts';
+import { type MediaItem } from '../types/media.ts';
 import { uploadMedia } from '../utils/uploadService.ts';
 
 interface MediaManagerProps {

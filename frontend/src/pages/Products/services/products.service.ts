@@ -1,6 +1,7 @@
 import { api } from '../../../api/client.ts';
 import { type Product } from '../../../types/product.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
+import { parseProductList, parseProductResponse } from '../../../utils/productContract.ts';
 import { type ProductMutationPayload, type ProductVersion } from '../types/product-form.types.ts';
 
 export interface ProductOrderPosition {
@@ -16,6 +17,14 @@ export interface ProductOrderProfile {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function requireProductResponse(value: unknown, operation: string): Product {
+    const product = parseProductResponse(value);
+    if (product) return product;
+
+    CustomLogger.error(`[Products] Invalid Product response contract received during ${operation}`);
+    throw new Error('InvalidProductResponseContract');
 }
 
 export function parseProductOrderPositions(value: unknown): ProductOrderPosition[] {
@@ -100,18 +109,25 @@ function normalizeProductVersion(version: unknown): ProductVersion | null {
 
 export const productsService = {
     async list(): Promise<Product[]> {
-        const response = await api.get<Product[]>('/products');
-        return response.data;
+        const response = await api.get<unknown>('/products');
+        const products = parseProductList(response.data);
+
+        if (!products) {
+            CustomLogger.error('[Products] Invalid product list contract received from API');
+            throw new Error('InvalidProductListResponseContract');
+        }
+
+        return products;
     },
 
     async create(payload: ProductMutationPayload): Promise<Product> {
-        const response = await api.post<Product>('/products', payload);
-        return response.data;
+        const response = await api.post<unknown>('/products', payload);
+        return requireProductResponse(response.data, 'create');
     },
 
     async update(id: string, payload: ProductMutationPayload): Promise<Product> {
-        const response = await api.put<Product>(`/products/${id}`, payload);
-        return response.data;
+        const response = await api.put<unknown>(`/products/${id}`, payload);
+        return requireProductResponse(response.data, 'update');
     },
 
     async listVersions(productId: string): Promise<ProductVersion[]> {

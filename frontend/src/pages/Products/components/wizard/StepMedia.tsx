@@ -1,6 +1,6 @@
 import { Image as ImageIcon } from 'lucide-react';
 import { MediaManager } from '../../../../components/MediaManager.tsx';
-import { type MediaItem } from '../../../../types/appointment.ts';
+import { type MediaItem } from '../../../../types/media.ts';
 import { PRODUCT_THUMBNAIL_UPLOAD } from '../../constants/product-upload.constants.ts';
 
 interface StepMediaProps {

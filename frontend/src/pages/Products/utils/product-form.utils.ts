@@ -1,18 +1,14 @@
-import type { MediaItem } from '../../../types/appointment.ts';
 import type { Product } from '../../../types/product.ts';
+import { parseProductMedias, parseProductResponse } from '../../../utils/productContract.ts';
 import { PRODUCT_THUMBNAIL_UPLOAD } from '../constants/product-upload.constants.ts';
 import type {
-    ProductAbcCategory,
-    ProductCostInclusion,
     ProductCostPreview,
     ProductFormValidation,
     ProductFormValues,
     ProductMutationPayload
 } from '../types/product-form.types.ts';
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+export { parseProductMedias } from '../../../utils/productContract.ts';
 
 function normalizeNonNegativeNumber(value: unknown, fallback = 0): number {
     const parsed = typeof value === 'number' ? value : Number(value);
@@ -22,49 +18,6 @@ function normalizeNonNegativeNumber(value: unknown, fallback = 0): number {
 function normalizePositiveInteger(value: unknown, fallback = 1): number {
     const parsed = typeof value === 'number' ? value : Number(value);
     return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function normalizeAbcCategory(value: unknown): ProductAbcCategory {
-    return value === 'A' || value === 'B' || value === 'C' ? value : 'C';
-}
-
-function normalizeCostInclusion(value: unknown): ProductCostInclusion {
-    return value === 'YES' || value === 'NO' || value === 'DEFAULT' ? value : 'DEFAULT';
-}
-
-function normalizeMediaItem(value: unknown): MediaItem | null {
-    if (!isRecord(value)) return null;
-
-    const id = typeof value.id === 'string' ? value.id.trim() : '';
-    const name = typeof value.name === 'string' ? value.name.trim() : '';
-    const url = typeof value.url === 'string' ? value.url.trim() : '';
-    const type = value.type;
-
-    if (!id || !name || !url || (type !== 'image' && type !== 'video' && type !== 'document')) {
-        return null;
-    }
-
-    return { id, name, url, type };
-}
-
-export function parseProductMedias(value: unknown): MediaItem[] {
-    let parsed = value;
-
-    if (typeof value === 'string') {
-        if (!value.trim()) return [];
-
-        try {
-            parsed = JSON.parse(value) as unknown;
-        } catch {
-            return [];
-        }
-    }
-
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed
-        .map(normalizeMediaItem)
-        .filter((media): media is MediaItem => media !== null);
 }
 
 export function createProductFormValues(product?: Product | null): ProductFormValues {
@@ -87,19 +40,19 @@ export function createProductFormValues(product?: Product | null): ProductFormVa
     }
 
     return {
-        sku: product.sku ?? '',
-        name: product.name ?? '',
-        brand: product.brand ?? '',
+        sku: product.sku,
+        name: product.name,
+        brand: product.brand,
         variation: product.variation ?? '',
         description: product.description ?? '',
         recipeCostPerUnit: normalizeNonNegativeNumber(product.recipeCostPerUnit),
         unitsPerBatch: normalizePositiveInteger(product.unitsPerBatch),
         indirectCost: normalizeNonNegativeNumber(product.indirectCost),
         finalPrice: normalizeNonNegativeNumber(product.finalPrice),
-        abcCategory: normalizeAbcCategory(product.abcCategory),
-        includeFixedCosts: normalizeCostInclusion(product.includeFixedCosts),
-        thumbnail: typeof product.thumbnail === 'string' && product.thumbnail.trim() ? product.thumbnail : null,
-        medias: parseProductMedias(product.medias)
+        abcCategory: product.abcCategory,
+        includeFixedCosts: product.includeFixedCosts,
+        thumbnail: product.thumbnail,
+        medias: product.medias.map((media) => ({ ...media }))
     };
 }
 
@@ -158,7 +111,7 @@ export function buildProductMutationPayload(values: ProductFormValues): ProductM
 }
 
 export function parseProductSnapshot(value: unknown): Product | null {
-    let parsed = value;
+    let parsed: unknown = value;
 
     if (typeof value === 'string') {
         try {
@@ -168,17 +121,7 @@ export function parseProductSnapshot(value: unknown): Product | null {
         }
     }
 
-    if (!isRecord(parsed)) return null;
-
-    if (
-        typeof parsed.id !== 'string' ||
-        typeof parsed.sku !== 'string' ||
-        typeof parsed.name !== 'string'
-    ) {
-        return null;
-    }
-
-    return parsed as unknown as Product;
+    return parseProductResponse(parsed, { allowLegacyUnitsPerBatch: true });
 }
 
 export function validateProductThumbnailFile(file: Pick<File, 'type' | 'size'>): string | null {
