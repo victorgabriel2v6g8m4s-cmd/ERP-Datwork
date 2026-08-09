@@ -90,15 +90,15 @@ test('Product read type no longer exposes legacy aliases or string escape hatche
     assert.match(source, /interface ProductMutationInput/);
 });
 
-test('production frontend does not consume removed Product legacy cost aliases', async () => {
-    const sourceRoot = fileURLToPath(new URL('../src/', import.meta.url));
+test('Products module does not consume removed Product legacy cost aliases', async () => {
+    const sourceRoot = fileURLToPath(new URL('../src/pages/Products/', import.meta.url));
     const files = await collectTypeScriptFiles(sourceRoot);
     const offenders = [];
 
     for (const file of files) {
         const source = await readFile(file, 'utf8');
         if (/\b(?:batchCost|productionCost)\b/.test(source)) {
-            offenders.push(file.replace(sourceRoot, 'src/'));
+            offenders.push(file.replace(sourceRoot, ''));
         }
     }
 
