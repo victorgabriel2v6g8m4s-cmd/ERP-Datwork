@@ -7,7 +7,9 @@
     "src/api/**/*.ts",
     "src/components/**/*.ts",
     "src/components/**/*.tsx",
+    "src/config/**/*.ts",
     "src/hooks/**/*.ts",
+    "src/i18n/**/*.ts",
     "src/theme/**/*.ts",
     "src/types/**/*.ts",
     "src/utils/**/*.ts"
