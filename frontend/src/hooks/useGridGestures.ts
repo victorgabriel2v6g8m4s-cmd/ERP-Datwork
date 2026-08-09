@@ -3,10 +3,10 @@ import { api } from '../api/client.ts';
 import { CustomLogger } from '../utils/CustomLogger.ts';
 
 interface GridGesturesOptions<T> {
-    endpoint: string;
-    currentList: T[];
-    setListState: (list: T[]) => void;
-    onRefresh: () => Promise<void> | void;
+    endpoint: string;                      // Rota base do Node (Ex: '/appointments', '/products')
+    currentList: T[];                      // Array de dados ativo da tela
+    setListState: (list: T[]) => void;     // Modificador de estado do React do componente pai
+    onRefresh: () => Promise<void> | void; // Callback síncrono para recarregar a tela pós-gravação
     skipConfirmDelete?: boolean;
 }
 
@@ -17,131 +17,149 @@ export function useGridGestures<T extends { id: string; status: string; position
     onRefresh,
     skipConfirmDelete = false
 }: GridGesturesOptions<T>) {
+
+    // ✨ Nome genérico e unificado para qualquer registro do ERP (Inquilinato)
     const [activeItem, setActiveItem] = useState<T | null>(null);
+
+    // Gatilhos Universais de Modais compartilhados pelas grades
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [viewModalOpen, setViewModalOpen] = useState(false);
 
+    // ==========================================
+    // 🧰 CATÁLOGO DE AÇÕES PRONTAS E SELADAS (AGNÓSTICAS)
+    // ==========================================
+
+    // 🔃 AÇÃO A: Reordenação Mecânica Linear por Arraste (Otimizada para Lote /reorder)
     const handleDragEnd = async (result: any, visibleList: T[] = currentList) => {
         const { destination, source } = result;
         if (!destination || destination.index === source.index) return;
 
-        const sourceList = Array.from(visibleList);
-        const [removed] = sourceList.splice(source.index, 1);
+        const reorderedVisibleItems = Array.from(visibleList);
+        const [removed] = reorderedVisibleItems.splice(source.index, 1);
+
         if (!removed) {
-            CustomLogger.warn(`[Grid Gestures] Reorder ignored because source index ${source.index} is invalid for ${endpoint}`);
+            CustomLogger.warn(`[Grid Gestures] Reordenação ignorada: índice de origem inválido (${source.index}) no endpoint ${endpoint}`);
             return;
         }
 
-        sourceList.splice(destination.index, 0, removed);
+        reorderedVisibleItems.splice(destination.index, 0, removed);
 
         const orderedCurrentList = [...currentList].sort(
             (a, b) => (a.position ?? 0) - (b.position ?? 0)
         );
-        const visibleIds = new Set(sourceList.map((item) => item.id));
-        const reorderedVisibleQueue = [...sourceList];
+        const visibleIds = new Set(reorderedVisibleItems.map((item) => item.id));
+        const reorderedQueue = [...reorderedVisibleItems];
 
         const mergedList = orderedCurrentList.map((item) => {
             if (!visibleIds.has(item.id)) return item;
-            return reorderedVisibleQueue.shift() ?? item;
+            return reorderedQueue.shift() ?? item;
         });
 
         const updatedList = mergedList.map((item, position) => ({ ...item, position }));
 
-        CustomLogger.info(
-            `[Grid Gestures] Reordering ${sourceList.length} visible records in ${endpoint}. ` +
-            `Source: ${source.index}; destination: ${destination.index}; total records: ${currentList.length}`
-        );
+        CustomLogger.info(`[Grid Gestures] Reordenando lista no endpoint ${endpoint}. Origem: ${source.index} -> Destino: ${destination.index}`);
 
+        // Feedback visual instantâneo na UI
         setListState(updatedList);
 
         try {
-            const positionsPayload = updatedList.map((item) => ({ id: item.id, position: item.position }));
+            // ✨ OTIMIZAÇÃO HISTÓRICA: Em vez de bombardear o SQLite com N patches individuais,
+            // enviamos o array consolidado em uma única requisição HTTP atômica para o endpoint /reorder
+            const positionsPayload = updatedList.map(item => ({ id: item.id, position: item.position }));
+
             await api.patch(`${endpoint}/reorder`, { positions: positionsPayload });
-            CustomLogger.info(`[Grid Gestures] Batch reorder persisted successfully for ${endpoint}`);
+            CustomLogger.info(`[Grid Gestures] Ordenação em lote gravada com sucesso absoluto no backend.`);
         } catch (error) {
-            CustomLogger.error(`[Grid Gestures] Failed to persist batch reorder for ${endpoint}. Restoring server state`, error);
-            await onRefresh();
+            CustomLogger.error(`[Grid Gestures] Falha ao persistir reordenação em lote no endpoint ${endpoint}. Revertendo...`, error);
+            onRefresh(); // Reverte o estado local buscando a verdade do banco
         }
     };
 
+    // 🧠 AÇÃO B: Máquina de Ciclo de Status Dinâmica (Swipe Right)
     const cycleStatus = async (itemOrId: T | string, sequence: string[] = ['PENDING', 'COMPLETED'], deleteStatus = 'CANCELED') => {
         const target = typeof itemOrId === 'string' ? currentList.find(i => i.id === itemOrId) : itemOrId;
         if (!target) return;
 
-        let nextStatus = sequence[0] ?? 'PENDING';
-        const currentIndex = sequence.indexOf(target.status);
+        let nextStatus = 'PENDING';
 
-        if (currentIndex >= 0) {
-            nextStatus = sequence[(currentIndex + 1) % sequence.length] ?? sequence[0] ?? 'PENDING';
+        if (target.status === 'PENDING' || target.status === 'SCHEDULED' || target.status === 'ACTIVE') {
+            nextStatus = 'COMPLETED';
+        } else if (target.status === 'COMPLETED') {
+            nextStatus = 'PENDING';
         } else if (target.status === deleteStatus || target.status === 'INACTIVE') {
-            nextStatus = sequence[0] ?? 'PENDING';
+            nextStatus = 'PENDING';
         } else {
             return;
         }
 
-        CustomLogger.info(`[Grid Gestures] Updating status for record ${target.id} to ${nextStatus}`);
+        CustomLogger.info(`[Grid Gestures] Avançando status do item ${target.id} para: ${nextStatus}`);
         setListState(currentList.map(i => i.id === target.id ? { ...i, status: nextStatus } : i));
 
         try {
             await api.patch(`${endpoint}/${target.id}/status`, { status: nextStatus });
-            await onRefresh();
+            onRefresh();
         } catch (error) {
-            CustomLogger.error(`[Grid Gestures] Failed to update status for record ${target.id}`, error);
-            await onRefresh();
+            CustomLogger.error(`[Grid Gestures] Erro ao mutar status do item ${target.id}`, error);
+            onRefresh();
         }
     };
 
+    // 🚨 AÇÃO C: Disparador de Popup de Confirmação para Soft-Delete / Cancelamento (Swipe Left)
     const triggerSoftDelete = async (item: T, deleteStatusTarget = 'CANCELED', activeStatusTarget = 'PENDING') => {
         if (item.status === 'PENDING' || item.status === 'SCHEDULED' || item.status === 'ACTIVE') {
+
+            // Se skipConfirmDelete for true, deleta direto
             if (skipConfirmDelete) {
                 setListState(currentList.map(i => i.id === item.id ? { ...i, status: deleteStatusTarget } : i));
                 try {
                     await api.patch(`${endpoint}/${item.id}/status`, { status: deleteStatusTarget });
-                    await onRefresh();
-                } catch (error) {
-                    CustomLogger.error(`[Grid Gestures] Failed to apply soft-delete status to record ${item.id}`, error);
-                    await onRefresh();
-                }
+                    onRefresh();
+                } catch (error) { onRefresh(); }
                 return;
             }
 
             setActiveItem(item);
             setConfirmModalOpen(true);
-            return;
-        }
+        } else {
+            // 🔄 FLUXO REVERSO DE REATIVAÇÃO INTEGRADO:
+            // ✨ CORREÇÃO: Passa a usar a variável dinâmica activeStatusTarget ('ACTIVE' ou 'PENDING')
+            CustomLogger.info(`[Grid Gestures] Reativando registro de forma direta com o status: "${activeStatusTarget}"`);
+            setListState(currentList.map(i => i.id === item.id ? { ...i, status: activeStatusTarget } : i));
 
-        CustomLogger.info(`[Grid Gestures] Reactivating record ${item.id} with status ${activeStatusTarget}`);
-        setListState(currentList.map(i => i.id === item.id ? { ...i, status: activeStatusTarget } : i));
-
-        try {
-            await api.patch(`${endpoint}/${item.id}/status`, { status: activeStatusTarget });
-            await onRefresh();
-        } catch (error) {
-            CustomLogger.error(`[Grid Gestures] Failed to reactivate record ${item.id}`, error);
-            await onRefresh();
+            try {
+                await api.patch(`${endpoint}/${item.id}/status`, { status: activeStatusTarget });
+                onRefresh();
+            } catch (error) {
+                CustomLogger.error(`[Grid Gestures] Erro ao reativar registro no banco`, error);
+                onRefresh();
+            }
         }
     };
 
+    // 📝 AÇÃO D: Executador do Soft-Delete Seguro no Banco (Gatilho da confirmação do modal)
     const executeConfirmDelete = async (deleteStatusTarget = 'CANCELED') => {
         if (!activeItem) return;
         const { id } = activeItem;
 
-        CustomLogger.info(`[Grid Gestures] Confirming logical deletion for record ${id}`);
+        CustomLogger.info(`[Grid Gestures] Confirmando Soft-Delete lógico para o registro ID: ${id}`);
         setListState(currentList.map(i => i.id === id ? { ...i, status: deleteStatusTarget } : i));
         setConfirmModalOpen(false);
 
         try {
+            // ✨ SEGURANÇA PATRIMONIAL: Mudança para patch de status de exclusão lógica (INACTIVE/CANCELED)
+            // Casando 100% com o Soft-Delete unificado e gerador de snapshots do backend
             await api.patch(`${endpoint}/${id}/status`, { status: deleteStatusTarget });
-            await onRefresh();
+            onRefresh();
         } catch (error) {
-            CustomLogger.error(`[Grid Gestures] Failed to apply logical deletion to record ${id}`, error);
-            await onRefresh();
+            CustomLogger.error(`[Grid Gestures] Falha ao processar Soft-Delete lógico do item ${id}`, error);
+            onRefresh();
         } finally {
             setActiveItem(null);
         }
     };
 
+    // 📂 AÇÃO E: Abertura imediata do modal de Edição Avançada
     const openEditModal = (itemOrId: T | string) => {
         const target = typeof itemOrId === 'string' ? currentList.find(i => i.id === itemOrId) : itemOrId;
         if (target) {
@@ -150,21 +168,23 @@ export function useGridGestures<T extends { id: string; status: string; position
         }
     };
 
+    // 👁️ AÇÃO F: Abertura imediata do modal de Visualização Detalhada
     const openViewModal = (item: T) => {
         setActiveItem(item);
         setViewModalOpen(true);
     };
 
+    // 🔮 AÇÃO G: Alteração instantânea de Sub-status com amortecedor de rede
     const updateSubStatus = async (id: string, nextSub: string) => {
-        CustomLogger.info(`[Grid Gestures] Updating sub-status for record ${id} to ${nextSub}`);
+        CustomLogger.info(`[Grid Gestures] Atualizando sub-status do item ${id} para: ${nextSub}`);
         setListState(currentList.map(item => item.id === id ? { ...item, subStatus: nextSub } : item));
 
         try {
             await api.patch(`${endpoint}/${id}/sub-status`, { subStatus: nextSub });
-            await onRefresh();
+            onRefresh();
         } catch (error) {
-            CustomLogger.error(`[Grid Gestures] Failed to update sub-status for record ${id}. Restoring server state`, error);
-            await onRefresh();
+            CustomLogger.error(`[Grid Gestures] Falha ao sincronizar sub-status do item ${id}. Revertendo...`, error);
+            onRefresh();
         }
     };
 
@@ -173,6 +193,7 @@ export function useGridGestures<T extends { id: string; status: string; position
         confirmModalOpen, setConfirmModalOpen,
         editModalOpen, setEditModalOpen,
         viewModalOpen, setViewModalOpen,
+
         actions: {
             handleDragEnd,
             cycleStatus,
