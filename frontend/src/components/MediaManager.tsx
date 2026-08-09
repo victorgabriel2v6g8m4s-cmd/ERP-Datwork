@@ -1,5 +1,7 @@
 import { Plus, X, FileText } from 'lucide-react';
 import { type ChangeEvent } from 'react';
+import { APP_CONFIG } from '../config/app.config.ts';
+import { TEXTS } from '../i18n/index.ts';
 import { type MediaItem } from '../types/media.ts';
 import { uploadMedia } from '../utils/uploadService.ts';
 
@@ -14,7 +16,7 @@ export function MediaManager({
   medias,
   onChangeMedias,
   onOpenLightbox,
-  uploadEndpoint = '/appointments/upload'
+  uploadEndpoint = APP_CONFIG.api.endpoints.uploads.appointments
 }: MediaManagerProps) {
   const handleFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
@@ -74,7 +76,7 @@ export function MediaManager({
 
         <label className="border-2 border-dashed border-slate-200 hover:border-indigo-500 rounded-xl aspect-video flex flex-col items-center justify-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer bg-slate-50/50">
           <Plus className="w-5 h-5" />
-          <span className="text-[10px] font-bold uppercase">Anexar Arquivo</span>
+          <span className="text-[10px] font-bold uppercase">{TEXTS.common.actions.attachFile}</span>
           <input type="file" multiple className="hidden" onChange={handleFileUpload} />
         </label>
       </div>
