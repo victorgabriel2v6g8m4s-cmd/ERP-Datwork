@@ -8,6 +8,7 @@ interface GridGesturesOptions<T> {
     setListState: (list: T[]) => void;     // Modificador de estado do React do componente pai
     onRefresh: () => Promise<void> | void; // Callback síncrono para recarregar a tela pós-gravação
     skipConfirmDelete?: boolean;
+    refreshAfterSoftDelete?: boolean;
 }
 
 export function useGridGestures<T extends { id: string; status: string; position?: number; subStatus?: string }>({
@@ -15,7 +16,8 @@ export function useGridGestures<T extends { id: string; status: string; position
     currentList,
     setListState,
     onRefresh,
-    skipConfirmDelete = false
+    skipConfirmDelete = false,
+    refreshAfterSoftDelete = true
 }: GridGesturesOptions<T>) {
 
     // ✨ Nome genérico e unificado para qualquer registro do ERP (Inquilinato)
@@ -114,7 +116,7 @@ export function useGridGestures<T extends { id: string; status: string; position
                 setListState(currentList.map(i => i.id === item.id ? { ...i, status: deleteStatusTarget } : i));
                 try {
                     await api.patch(`${endpoint}/${item.id}/status`, { status: deleteStatusTarget });
-                    onRefresh();
+                    if (refreshAfterSoftDelete) onRefresh();
                 } catch (error) { onRefresh(); }
                 return;
             }
@@ -129,7 +131,7 @@ export function useGridGestures<T extends { id: string; status: string; position
 
             try {
                 await api.patch(`${endpoint}/${item.id}/status`, { status: activeStatusTarget });
-                onRefresh();
+                if (refreshAfterSoftDelete) onRefresh();
             } catch (error) {
                 CustomLogger.error(`[Grid Gestures] Erro ao reativar registro no banco`, error);
                 onRefresh();
