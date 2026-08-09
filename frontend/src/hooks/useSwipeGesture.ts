@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useMotionValue, useTransform, type PanInfo } from 'framer-motion';
 
 interface UseSwipeGestureProps<T> {
@@ -8,6 +8,7 @@ interface UseSwipeGestureProps<T> {
     itemRef: T;
     leftColor?: string;
     rightColor?: string;
+    actionThresholdPx?: number;
 }
 
 export function useSwipeGesture<T>({
@@ -16,7 +17,8 @@ export function useSwipeGesture<T>({
     onSwipeRight,
     itemRef,
     leftColor = '#ef4444',
-    rightColor = '#6366f1'
+    rightColor = '#6366f1',
+    actionThresholdPx = 100
 }: UseSwipeGestureProps<T>) {
     const [isPressing, setIsPressing] = useState(false);
     const x = useMotionValue(0);
@@ -32,15 +34,13 @@ export function useSwipeGesture<T>({
 
     const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
         setIsPressing(false);
-
-        if (info.offset.x < -100) {
+        if (info.offset.x < -actionThresholdPx) {
             onSwipeLeft(itemRef);
-        } else if (info.offset.x > 100) {
+        } else if (info.offset.x > actionThresholdPx) {
             onSwipeRight(itemId);
         }
-
         x.set(0);
-    }, [itemId, itemRef, onSwipeLeft, onSwipeRight, x]);
+    }, [actionThresholdPx, itemId, itemRef, onSwipeLeft, onSwipeRight, x]);
 
     return {
         x,

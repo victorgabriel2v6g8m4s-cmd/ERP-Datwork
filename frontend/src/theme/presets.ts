@@ -32,5 +32,39 @@ export const ERP_THEME = {
         active: 'bg-indigo-600 border-indigo-600 text-white font-bold shadow-sm',
         inactive: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100',
         pinnedBadge: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-amber-700 font-black'
+    },
+
+    recipes: {
+        page: {
+            shell: 'w-full min-h-screen bg-slate-50/50 pb-24 font-sans selection:bg-indigo-500/10 select-none',
+            main: 'w-full px-6 mx-auto mt-6 space-y-4',
+            emptyState: 'text-center py-12 bg-white border rounded-2xl border-slate-200/80 text-slate-400 font-bold text-xs uppercase tracking-wider block w-full',
+            createFab: 'fixed bottom-20 right-6 z-40 flex items-center justify-center w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-indigo-500/20'
+        },
+        card: {
+            wrapper: 'w-full block rounded-2xl transition-shadow',
+            dragging: 'shadow-md ring-2 ring-indigo-500/5 z-30 scale-[1.01]',
+            shell: 'w-full rounded-2xl border overflow-hidden relative shadow-3xs transition-colors duration-200',
+            active: 'border-slate-200/80 bg-white hover:border-indigo-300',
+            inactive: 'border-red-200 bg-red-50/30 opacity-45 shadow-none',
+            body: 'p-4 z-10 relative flex items-center justify-between w-full h-full cursor-pointer select-none gap-3',
+            bodyActive: 'bg-white hover:bg-slate-50/20',
+            bodyInactive: 'bg-transparent',
+            inactiveBadge: 'text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider bg-red-100 text-red-700 border border-red-200',
+            metrics: 'flex gap-4 text-[11px] font-bold text-slate-500 mt-2 bg-slate-50 p-2 rounded-xl w-fit border border-slate-100'
+        },
+        modal: {
+            overlay: 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs font-sans text-xs sm:text-sm select-none',
+            editor: 'w-full max-w-lg bg-white rounded-3xl shadow-2xl p-6 border border-slate-100 max-h-[90vh] overflow-y-auto space-y-4 text-left',
+            viewer: 'w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 border border-slate-100 max-h-[85vh] overflow-y-auto space-y-5 relative',
+            section: 'bg-slate-50/50 p-4 rounded-2xl border border-slate-100 space-y-3',
+            costSummary: 'bg-slate-900 text-white p-3 rounded-2xl grid grid-cols-2 gap-4 px-4 divide-x divide-slate-800 border border-slate-800',
+            footer: 'flex gap-3 border-t border-slate-100 pt-4 font-bold text-xs'
+        },
+        statusDialog: {
+            container: 'bg-white rounded-2xl p-5 max-w-sm w-full space-y-4 border border-slate-100 shadow-xl',
+            cancelButton: 'flex-1 py-2 bg-slate-100 text-slate-500 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors',
+            confirmButton: 'flex-1 py-2 bg-rose-600 text-white rounded-xl cursor-pointer hover:bg-rose-700 transition-colors shadow-md shadow-rose-100'
+        }
     }
 } as const;

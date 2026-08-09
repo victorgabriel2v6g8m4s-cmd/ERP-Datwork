@@ -12,6 +12,7 @@
     "src/i18n/**/*.ts",
     "src/theme/**/*.ts",
     "src/types/**/*.ts",
+    "src/ui/**/*.ts",
     "src/utils/**/*.ts"
   ]
 }

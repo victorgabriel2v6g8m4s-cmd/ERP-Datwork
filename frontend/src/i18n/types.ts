@@ -7,6 +7,8 @@ export interface AppTextDictionary {
       cancel: string;
       confirm: string;
       update: string;
+      back: string;
+      close: string;
       attachFile: string;
       chooseImage: string;
       replaceCover: string;
@@ -14,6 +16,7 @@ export interface AppTextDictionary {
     };
     status: {
       uploading: string;
+      saving: string;
     };
   };
   uploads: {
@@ -41,6 +44,74 @@ export interface AppTextDictionary {
       coverLabel: string;
       coverAlt: string;
       galleryLabel: string;
+    };
+  };
+  recipes: {
+    page: {
+      title: string;
+      subtitle: string;
+      activeKpi: string;
+      averageBatchCostKpi: string;
+      unitSuffix: string;
+      emptyState: string;
+      createActionTitle: string;
+    };
+    card: {
+      reactivate: string;
+      deactivate: string;
+      inactiveBadge: string;
+      batchCost: string;
+      unitCost: string;
+      yield: string;
+    };
+    statusDialog: {
+      deactivateTitle: string;
+      reactivateTitle: string;
+      description: (productName: string) => string;
+    };
+    form: {
+      createTitle: string;
+      editTitle: string;
+      productTarget: string;
+      chooseProduct: string;
+      unitsPerBatch: string;
+      addComponent: string;
+      ingredient: string;
+      chooseIngredient: string;
+      quantityUsed: string;
+      quantityAdditional: string;
+      draftStructure: string;
+      savedStructure: string;
+      emptyDraft: string;
+      linkedProduct: string;
+      linkageAndYield: string;
+      modifyIngredients: string;
+      batchCost: string;
+      unitCost: string;
+      saveCreate: string;
+      saveEdit: string;
+    };
+    view: {
+      subtitle: string;
+      yieldLabel: string;
+      servings: (value: number) => string;
+      batchCost: string;
+      unitCost: string;
+      ingredientColumn: string;
+      quantityColumn: string;
+      unitColumn: string;
+      fractionalCostColumn: string;
+      emptyIngredients: string;
+      close: string;
+    };
+    errors: {
+      load: string;
+      formOptions: string;
+      create: (message: string) => string;
+      update: (message: string) => string;
+      createFallback: string;
+      updateFallback: string;
+      invalidResponse: string;
     };
   };
   orderProfiles: {

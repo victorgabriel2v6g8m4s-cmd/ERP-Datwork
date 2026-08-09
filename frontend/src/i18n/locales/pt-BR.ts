@@ -9,13 +9,16 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       cancel: 'Cancelar',
       confirm: 'Confirmar',
       update: 'Atualizar',
+      back: 'Voltar',
+      close: 'Fechar',
       attachFile: 'Anexar Arquivo',
       chooseImage: 'Escolher Imagem',
       replaceCover: 'Substituir Capa',
       saveCurrentOrder: 'Salvar Ordem Atual'
     },
     status: {
-      uploading: 'Enviando...'
+      uploading: 'Enviando...',
+      saving: 'Salvando...'
     }
   },
   uploads: {
@@ -43,6 +46,74 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       coverLabel: 'Imagem de Capa Principal',
       coverAlt: 'Capa',
       galleryLabel: 'Galeria de Fotos & Documentos Técnicos'
+    }
+  },
+  recipes: {
+    page: {
+      title: 'Fichas Técnicas',
+      subtitle: 'Engenharia de Insumos & Estruturação de Lotes',
+      activeKpi: 'Fichas Ativas',
+      averageBatchCostKpi: 'Custo Médio Lote',
+      unitSuffix: 'un.',
+      emptyState: 'Nenhuma receita vinculada com os critérios fornecidos.',
+      createActionTitle: 'Cadastrar Nova Ficha Técnica'
+    },
+    card: {
+      reactivate: 'Reativar Receita',
+      deactivate: 'Desativar Receita',
+      inactiveBadge: 'INATIVA',
+      batchCost: 'Custo do Lote:',
+      unitCost: 'Por Porção:',
+      yield: 'Rendimento:'
+    },
+    statusDialog: {
+      deactivateTitle: 'Deseja desativar esta receita?',
+      reactivateTitle: 'Deseja reativar esta receita?',
+      description: (productName) => `Esta ação alterará o status operacional da ficha técnica do produto “${productName}”.`
+    },
+    form: {
+      createTitle: 'Nova Ficha Técnica',
+      editTitle: 'Editar Engenharia',
+      productTarget: 'Produto Alvo',
+      chooseProduct: 'Escolha um produto...',
+      unitsPerBatch: 'Qtd por Lote',
+      addComponent: 'Inserir Componente Fracionado',
+      ingredient: 'Matéria-Prima / Insumo',
+      chooseIngredient: 'Escolha...',
+      quantityUsed: 'Qtd. Usada',
+      quantityAdditional: 'Qtd. Adicional',
+      draftStructure: 'Estrutura de Insumos da Receita',
+      savedStructure: 'Estrutura de Insumos Salva',
+      emptyDraft: 'Adicione insumos acima para compor a receita.',
+      linkedProduct: 'Produto Vinculado',
+      linkageAndYield: 'Vinculação & Rendimento do Lote',
+      modifyIngredients: 'Modificar Estrutura de Insumos',
+      batchCost: 'Custo Total Lote',
+      unitCost: 'Custo por Porção',
+      saveCreate: 'Salvar Engenharia',
+      saveEdit: 'Salvar Alterações'
+    },
+    view: {
+      subtitle: 'Ficha Técnica & Composição Fracionada',
+      yieldLabel: 'Rendimento Lote',
+      servings: (value) => `${value} porções`,
+      batchCost: 'Custo Total Lote',
+      unitCost: 'Custo por Porção',
+      ingredientColumn: 'Item (Insumo)',
+      quantityColumn: 'Quantidade',
+      unitColumn: 'Medida',
+      fractionalCostColumn: 'Custo Fracionado',
+      emptyIngredients: 'Nenhum insumo associado a esta receita.',
+      close: 'Fechar Ficha Técnica'
+    },
+    errors: {
+      load: 'Não foi possível carregar as fichas técnicas.',
+      formOptions: 'Não foi possível carregar produtos e insumos para o formulário.',
+      create: (message) => `Erro: ${message}`,
+      update: (message) => `Erro ao atualizar: ${message}`,
+      createFallback: 'Falha ao salvar a ficha técnica.',
+      updateFallback: 'Falha ao atualizar a ficha técnica.',
+      invalidResponse: 'O servidor retornou uma ficha técnica em formato inválido.'
     }
   },
   orderProfiles: {

@@ -27,6 +27,19 @@ export const APP_CONFIG = {
       includeFixedCosts: 'DEFAULT',
       unitsPerBatch: 1
     }
+  },
+  recipes: {
+    defaults: {
+      unitsPerBatch: 1
+    },
+    limits: {
+      minUnitsPerBatch: 1,
+      minIngredientQuantity: 0
+    },
+    interactions: {
+      swipeActionThresholdPx: 80,
+      swipeDragLimitPx: 120
+    }
   }
 } as const;
 

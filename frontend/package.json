@@ -7,6 +7,7 @@
     "dev": "vite",
     "typecheck": "tsc -b",
     "typecheck:shared": "tsc -p tsconfig.shared.json",
+    "typecheck:recipes": "tsc -p tsconfig.recipes.json",
     "build:bundle": "vite build",
     "build": "npm run typecheck && npm run build:bundle",
     "lint": "oxlint",
