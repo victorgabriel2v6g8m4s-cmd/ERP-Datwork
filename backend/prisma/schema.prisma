@@ -127,9 +127,11 @@ model CustomOrderProfile {
   id        String   @id @default(uuid())
   name      String
   positions Json // ✨ Mudado para Json para evitar parse/stringify manual no Node
+  scope     String   @default("PRODUCT")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([scope])
   @@map("custom_order_profiles")
 }
 

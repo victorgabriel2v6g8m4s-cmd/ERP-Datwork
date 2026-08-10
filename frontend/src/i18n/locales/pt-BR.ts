@@ -9,12 +9,8 @@ export const PT_BR_TEXTS: AppTextDictionary = {
     },
     status: { uploading: 'Enviando...', saving: 'Salvando...' },
     search: {
-      filters: 'Filtros',
-      sortCriterion: 'Critério de Ordenação',
-      customOrder: 'Ordem customizada (Sua ordenação tátil)',
-      alphabetical: 'Nome em ordem alfabética (A-Z)',
-      recentDate: 'Data de cadastro (Mais recentes)',
-      clearFilters: 'Limpar Filtros'
+      filters: 'Filtros', sortCriterion: 'Critério de Ordenação', customOrder: 'Ordem customizada (Sua ordenação tátil)',
+      alphabetical: 'Nome em ordem alfabética (A-Z)', recentDate: 'Data de cadastro (Mais recentes)', clearFilters: 'Limpar Filtros'
     }
   },
   uploads: {
@@ -36,6 +32,39 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       createFallback: 'Falha ao salvar produto.', updateFallback: 'Falha na rede.'
     },
     media: { coverLabel: 'Imagem de Capa Principal', coverAlt: 'Capa', galleryLabel: 'Galeria de Fotos & Documentos Técnicos' }
+  },
+  ingredients: {
+    page: {
+      title: 'Cadastro de Insumos', subtitle: 'Almoxarifado & Matérias-Primas de Fábrica', totalKpi: 'Matérias-Primas',
+      averageCostKpi: 'Média de Custo', itemSuffix: 'itens', loading: 'Carregando catálogo de insumos...',
+      emptyState: 'Nenhum insumo localizado com os critérios atuais.', createActionTitle: 'Cadastrar novo insumo'
+    },
+    search: {
+      placeholder: 'Buscar insumo por nome ou SKU...', costSort: 'Preço de custo (Maior)', unitFilterLabel: 'Filtrar por Unidade de Medida',
+      allUnits: 'Todas as Unidades de Medida', profilePrefix: 'Perfil:'
+    },
+    columns: {
+      thumbnail: 'Thumb', sku: 'SKU', name: 'Nome / Subtítulo', price: 'Preço Custo', quantity: 'Qtd. Estoque', unit: 'Unidade Medida', status: 'Status'
+    },
+    form: {
+      identification: 'Dados Identificadores', sku: 'Código SKU *', skuPlaceholder: 'Ex: INS-8849', name: 'Nome do Item *',
+      namePlaceholder: 'Ex: Chocolate em pó', metrics: 'Métricas do Insumo', price: 'Preço de Compra', pricePlaceholder: 'R$ 0,00',
+      quantity: 'Qtd. Contida', unit: 'Unidade Medida', media: 'Fotos & Mídias Anexas', cover: 'Imagem de Capa Principal',
+      coverAlt: 'Capa do insumo', gallery: 'Galeria de Fotos & Documentos Técnicos'
+    },
+    wizard: {
+      title: 'Assistente de Insumos', step: (current, total) => `Etapa ${current} de ${total}`,
+      steps: ['Identificação Básica', 'Métricas de Custo', 'Galeria & Capa'], next: 'Avançar', finish: 'Concluir Cadastro'
+    },
+    edit: { title: 'Alterar Insumo', save: 'Salvar Alterações' },
+    view: { price: 'Preço de Custo Base', quantity: 'Fração / Volume Contido', history: 'Linha do Tempo & Histórico' },
+    status: { deactivate: 'Desativar', reactivate: 'Reativar' },
+    errors: {
+      load: 'Não foi possível carregar os insumos.', create: 'Não foi possível cadastrar o insumo.', update: 'Não foi possível atualizar o insumo.',
+      status: 'Não foi possível alterar o status do insumo.', reorder: 'Não foi possível salvar a nova ordem dos insumos.',
+      history: 'Não foi possível carregar o histórico do insumo.', upload: 'Não foi possível enviar a mídia do insumo.',
+      invalidResponse: 'O servidor retornou dados de insumo em formato inválido.'
+    }
   },
   recipes: {
     page: {
@@ -105,40 +134,20 @@ export const PT_BR_TEXTS: AppTextDictionary = {
   },
   agenda: {
     page: {
-      title: 'Agenda & Horários',
-      subtitle: 'Grade Operacional e Fluxo de Atendimentos',
-      totalKpi: 'Total Agendados',
-      pendingKpi: 'Pendentes',
-      completedKpi: 'Realizados',
-      canceledKpi: 'Cancelados',
-      serviceSuffix: 'serv.',
-      unitSuffix: 'un.',
-      loading: 'Carregando agenda...',
+      title: 'Agenda & Horários', subtitle: 'Grade Operacional e Fluxo de Atendimentos', totalKpi: 'Total Agendados', pendingKpi: 'Pendentes',
+      completedKpi: 'Realizados', canceledKpi: 'Cancelados', serviceSuffix: 'serv.', unitSuffix: 'un.', loading: 'Carregando agenda...',
       emptyState: 'Nenhum agendamento localizado nesta fila.'
     },
     filters: {
-      searchPlaceholder: 'Pesquisar por agendamento...',
-      calendarAction: 'Ver Calendário',
-      statusAll: 'Qualquer Status',
-      pending: 'Agendados',
-      completed: 'Realizados',
-      canceled: 'Cancelados',
-      dateAll: 'Todas as Datas',
-      today: 'Hoje',
-      week: 'Esta Semana',
-      month: 'Este Mês',
-      custom: 'Personalizado',
-      chronologicalSort: 'Data e horário (Mais próximos)'
+      searchPlaceholder: 'Pesquisar por agendamento...', calendarAction: 'Ver Calendário', statusAll: 'Qualquer Status', pending: 'Agendados',
+      completed: 'Realizados', canceled: 'Cancelados', dateAll: 'Todas as Datas', today: 'Hoje', week: 'Esta Semana', month: 'Este Mês',
+      custom: 'Personalizado', chronologicalSort: 'Data e horário (Mais próximos)'
     },
     status: { PENDING: 'Agendado', COMPLETED: 'Realizado', CANCELED: 'Cancelado' },
     swipe: { completed: 'Realizado', cancel: 'Desmarcar' },
     subStatus: {
       fieldLabel: 'Sub-status do Atendimento',
-      groups: {
-        INITIAL_PAYMENT: 'Iniciais e Pagamento',
-        EXECUTION: 'Confirmação e Execução',
-        FINAL_EXCEPTION: 'Finais e Exceção'
-      },
+      groups: { INITIAL_PAYMENT: 'Iniciais e Pagamento', EXECUTION: 'Confirmação e Execução', FINAL_EXCEPTION: 'Finais e Exceção' },
       options: {
         RASCUNHO: 'Rascunho', AGUARDANDO_PAGAMENTO: 'Aguardando Pagamento', EM_ANALISE: 'Em Análise', RECUSADO: 'Recusado',
         CONFIRMADO: 'Confirmado', CHECK_IN: 'Check-In', EM_ESPERA: 'Em Espera', EM_ANDAMENTO: 'Em Andamento', PAUSADO: 'Pausado',
@@ -148,69 +157,33 @@ export const PT_BR_TEXTS: AppTextDictionary = {
     wizard: {
       title: 'Criar Novo Agendamento',
       stepLabels: ['Etapa 1: Dados do Agendamento', 'Etapa 2: Cadastro do Cliente', 'Etapa 3: Anexar Mídias', 'Etapa 4: Lançamento Financeiro'],
-      nameLabel: 'Nome do Agendamento *',
-      namePlaceholder: 'Ex: Consultoria de Negócios',
-      dateLabel: 'Data Agendada *',
-      timeLabel: 'Horário *',
-      notesLabel: 'Observações da Tarefa',
-      notesPlaceholder: 'Insira notas explicativas...',
-      customerHint: 'Preencha os dados ou clique em “Pular Etapa” para avançar.',
-      mediaHint: 'Anexe mídias a este agendamento ou clique em “Pular Etapa”.',
-      financialHint: 'Lance receitas ou despesas vinculadas ou clique em “Concluir Agendamento”.',
-      next: 'Próximo',
-      skip: 'Pular Etapa',
-      advance: 'Avançar',
-      finish: 'Concluir Agendamento'
+      nameLabel: 'Nome do Agendamento *', namePlaceholder: 'Ex: Consultoria de Negócios', dateLabel: 'Data Agendada *', timeLabel: 'Horário *',
+      notesLabel: 'Observações da Tarefa', notesPlaceholder: 'Insira notas explicativas...', customerHint: 'Preencha os dados ou clique em “Pular Etapa” para avançar.',
+      mediaHint: 'Anexe mídias a este agendamento ou clique em “Pular Etapa”.', financialHint: 'Lance receitas ou despesas vinculadas ou clique em “Concluir Agendamento”.',
+      next: 'Próximo', skip: 'Pular Etapa', advance: 'Avançar', finish: 'Concluir Agendamento'
     },
     edit: {
-      title: 'Editar Agendamento',
-      nameLabel: 'Nome do Agendamento',
-      dateLabel: 'Data Agendada',
-      timeLabel: 'Horário',
-      notesLabel: 'Observações da Tarefa',
-      notesPlaceholder: 'Adicione detalhes, notas ou observações...',
-      mediaHeading: (count) => `Mídias e Anexos (${count})`,
-      save: 'Salvar Alterações'
+      title: 'Editar Agendamento', nameLabel: 'Nome do Agendamento', dateLabel: 'Data Agendada', timeLabel: 'Horário', notesLabel: 'Observações da Tarefa',
+      notesPlaceholder: 'Adicione detalhes, notas ou observações...', mediaHeading: (count) => `Mídias e Anexos (${count})`, save: 'Salvar Alterações'
     },
-    view: {
-      timeLabel: 'Horário',
-      dateLabel: 'Data',
-      subStatusLabel: 'Sub-status Operacional',
-      notesLabel: 'Observações da Tarefa'
-    },
-    confirm: {
-      cancelTitle: 'Deseja desmarcar este item?',
-      cancelDescription: 'O agendamento será cancelado.'
-    },
+    view: { timeLabel: 'Horário', dateLabel: 'Data', subStatusLabel: 'Sub-status Operacional', notesLabel: 'Observações da Tarefa' },
+    confirm: { cancelTitle: 'Deseja desmarcar este item?', cancelDescription: 'O agendamento será cancelado.' },
     calendar: {
-      back: 'Voltar',
-      rangeAction: 'Agendamentos neste Período',
-      loading: 'Sincronizando Linha do Tempo...',
+      back: 'Voltar', rangeAction: 'Agendamentos neste Período', loading: 'Sincronizando Linha do Tempo...',
       months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
       weekHeaders: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
     },
     cascade: {
-      title: 'Reagendamento em Cascata',
-      movedPosition: (position) => `Item movido para posição #${position}`,
-      postponeTab: 'Adiar (Posteriores)',
-      advanceTab: 'Adiantar (Anteriores)',
-      intervalHint: 'Clique para definir o intervalo afetado:',
-      originalTime: (time) => `Horário original: ${time}`,
-      empty: 'Nenhum agendamento pendente nesta seção.',
-      keep: 'Manter Inalterado',
-      submit: (count) => `Reagendar Selecionados (${count})`,
-      offsetLabel: 'Valor do Deslocamento',
-      timeUnitLabel: 'Grandeza Temporal',
+      title: 'Reagendamento em Cascata', movedPosition: (position) => `Item movido para posição #${position}`, postponeTab: 'Adiar (Posteriores)',
+      advanceTab: 'Adiantar (Anteriores)', intervalHint: 'Clique para definir o intervalo afetado:', originalTime: (time) => `Horário original: ${time}`,
+      empty: 'Nenhum agendamento pendente nesta seção.', keep: 'Manter Inalterado', submit: (count) => `Reagendar Selecionados (${count})`,
+      offsetLabel: 'Valor do Deslocamento', timeUnitLabel: 'Grandeza Temporal',
       units: { MINUTES: 'Minutos', HOURS: 'Horas', DAYS: 'Dias', WEEKS: 'Semanas', MONTHS: 'Meses' }
     },
     errors: {
-      load: 'Não foi possível carregar a agenda.',
-      create: 'Não foi possível criar o agendamento.',
-      update: 'Não foi possível atualizar o agendamento.',
-      status: 'Não foi possível atualizar o status do agendamento.',
-      subStatus: 'Não foi possível atualizar o sub-status do agendamento.',
-      cascade: 'Não foi possível concluir o reagendamento em cascata.',
-      invalidResponse: 'O servidor retornou dados de agendamento em formato inválido.'
+      load: 'Não foi possível carregar a agenda.', create: 'Não foi possível criar o agendamento.', update: 'Não foi possível atualizar o agendamento.',
+      status: 'Não foi possível atualizar o status do agendamento.', subStatus: 'Não foi possível atualizar o sub-status do agendamento.',
+      cascade: 'Não foi possível concluir o reagendamento em cascata.', invalidResponse: 'O servidor retornou dados de agendamento em formato inválido.'
     }
   },
   orderProfiles: {

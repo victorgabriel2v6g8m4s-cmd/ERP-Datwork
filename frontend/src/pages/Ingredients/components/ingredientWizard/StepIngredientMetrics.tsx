@@ -1,67 +1,68 @@
 import { Coins } from 'lucide-react';
+import { APP_CONFIG } from '../../../../config/app.config.ts';
+import { TEXTS } from '../../../../i18n/index.ts';
+import { ERP_THEME } from '../../../../theme/presets.ts';
+import { UI_KEYS } from '../../../../ui/keys.ts';
 import { maskCurrencyBRL } from '../../../../utils/format.ts';
+import type { IngredientUnit } from '../../types/ingredient.types.ts';
 
 interface StepIngredientMetricsProps {
-    price: number;
-    setPrice: (v: number) => void;
-    quantity: number;
-    setQuantity: (v: number) => void;
-    unit: string;
-    setUnit: (v: string) => void;
+  price: number;
+  setPrice: (value: number) => void;
+  quantity: number;
+  setQuantity: (value: number) => void;
+  unit: IngredientUnit;
+  setUnit: (value: IngredientUnit) => void;
 }
 
-export function StepIngredientMetrics({
-    price, setPrice, quantity, setQuantity, unit, setUnit
-}: StepIngredientMetricsProps) {
-    return (
-        <div className="space-y-4 font-sans text-xs sm:text-sm">
-            <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Coins className="w-3.5 h-3.5" /> Métricas do Insumo
-            </h4>
+export function StepIngredientMetrics({ price, setPrice, quantity, setQuantity, unit, setUnit }: StepIngredientMetricsProps) {
+  return (
+    <div className="space-y-4 font-sans text-xs sm:text-sm">
+      <h4 className={ERP_THEME.ingredients.form.sectionTitle}>
+        <Coins className="w-3.5 h-3.5" /> {TEXTS.ingredients.form.metrics}
+      </h4>
 
-            <div className="grid grid-cols-3 gap-3">
-                {/* Preço de Compra */}
-                <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">Preço de Compra</label>
-                    <input
-                        type="text"
-                        placeholder="R$ 0,00"
-                        value={price > 0 ? maskCurrencyBRL((price * 100).toFixed(0)) : ''}
-                        onChange={(e) => setPrice(Number(e.target.value.replace(/\D/g, "")) / 100)}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 tabular-nums focus:outline-none focus:border-indigo-500"
-                    />
-                </div>
-
-                {/* Quantidade Contida */}
-                <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">Qtd. Contida</label>
-                    <input
-                        type="number"
-                        min={0.01}
-                        step="any"
-                        value={quantity}
-                        onChange={(e) => setQuantity(Math.max(0.01, Number(e.target.value)))}
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
-                    />
-                </div>
-
-                {/* Unidade de Medida Oficial */}
-                <div>
-                    <label className="block text-[11px] font-bold text-slate-500 mb-1">Unidade Medida</label>
-                    <select
-                        value={unit}
-                        onChange={(e) => setUnit(e.target.value)}
-                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl font-black text-slate-700 h-[38px] focus:outline-none cursor-pointer focus:border-indigo-500"
-                    >
-                        <option value="Unidades">Unidades (un.)</option>
-                        <option value="Gramas">Gramas (g)</option>
-                        <option value="Quilos">Quilos (kg)</option>
-                        <option value="MLs">MLs (ml)</option>
-                        <option value="Centímetros">Centímetros (cm)</option>
-                        <option value="Metros">Metros (m)</option>
-                    </select>
-                </div>
-            </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className={ERP_THEME.ingredients.form.label}>{TEXTS.ingredients.form.price}</label>
+          <input
+            type="text"
+            placeholder={TEXTS.ingredients.form.pricePlaceholder}
+            value={price > 0 ? maskCurrencyBRL((price * 100).toFixed(0)) : ''}
+            onChange={(event) => setPrice(Number(event.target.value.replace(/\D/g, '')) / 100)}
+            className={`${ERP_THEME.ingredients.form.input} tabular-nums`}
+            data-ui-key={UI_KEYS.ingredients.formPrice}
+          />
         </div>
-    );
+
+        <div>
+          <label className={ERP_THEME.ingredients.form.label}>{TEXTS.ingredients.form.quantity}</label>
+          <input
+            type="number"
+            min={APP_CONFIG.ingredients.limits.minQuantity}
+            step="any"
+            value={quantity}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              setQuantity(Number.isFinite(next) ? Math.max(APP_CONFIG.ingredients.limits.minQuantity, next) : APP_CONFIG.ingredients.limits.minQuantity);
+            }}
+            className={ERP_THEME.ingredients.form.input}
+            data-ui-key={UI_KEYS.ingredients.formQuantity}
+          />
+        </div>
+
+        <div>
+          <label className={ERP_THEME.ingredients.form.label}>{TEXTS.ingredients.form.unit}</label>
+          <select
+            value={unit}
+            onChange={(event) => setUnit(event.target.value as IngredientUnit)}
+            className={ERP_THEME.ingredients.form.select}
+            data-ui-key={UI_KEYS.ingredients.formUnit}
+          >
+            {APP_CONFIG.ingredients.units.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
 }

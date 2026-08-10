@@ -1,8 +1,10 @@
 import { Edit2, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Draggable } from '@hello-pangea/dnd';
-import { formatCurrencyBRL } from '../utils/format.ts';
+import { TEXTS } from '../i18n/index.ts';
 import { ERP_THEME } from '../theme/presets.ts';
+import { UI_KEYS } from '../ui/keys.ts';
+import { formatCurrencyBRL } from '../utils/format.ts';
 import { useSwipeGesture } from '../hooks/useSwipeGesture.ts';
 
 interface UniversalRowItemProps {
@@ -31,6 +33,8 @@ export function UniversalRowItem({ type, item, index, onSwipeLeft, onSwipeRight,
         totalUnitCost: Number(item.totalUnitCost || 0)
     } : null;
 
+    const ingredientStatusAction = item.status === 'ACTIVE' ? TEXTS.ingredients.status.deactivate : TEXTS.ingredients.status.reactivate;
+
     return (
         <Draggable draggableId={item.id} index={index}>
             {(provided, snapshot) => (
@@ -40,13 +44,14 @@ export function UniversalRowItem({ type, item, index, onSwipeLeft, onSwipeRight,
                     {...provided.dragHandleProps}
                     style={{ ...provided.draggableProps.style, background: gesture.bgSwipe as any }}
                     className="relative transition-shadow duration-150 select-none touch-pan-y w-full block rounded-xl overflow-hidden mb-1"
+                    data-ui-key={isProducts ? undefined : UI_KEYS.ingredients.row}
                 >
                     <div className="absolute inset-0 pointer-events-none flex items-center justify-between px-6 z-0 w-full font-sans">
                         <motion.div style={{ opacity: gesture.opacityRight }} className="flex items-center gap-1.5 text-white font-bold text-xs">
                             <Edit2 className="w-3.5 h-3.5" /> Editar Dados
                         </motion.div>
                         <motion.div style={{ opacity: gesture.opacityLeft }} className="flex items-center gap-1.5 text-white font-bold text-xs">
-                            <ShieldAlert className="w-3.5 h-3.5" /> {item.status === 'ACTIVE' ? 'Desativar' : 'Reativar'}
+                            <ShieldAlert className="w-3.5 h-3.5" /> {isProducts ? (item.status === 'ACTIVE' ? 'Desativar' : 'Reativar') : ingredientStatusAction}
                         </motion.div>
                     </div>
 
@@ -55,7 +60,7 @@ export function UniversalRowItem({ type, item, index, onSwipeLeft, onSwipeRight,
                             drag="x"
                             dragConstraints={{ left: -120, right: 120 }}
                             dragElastic={{ left: 0.5, right: 0.5 }}
-                            dragSnapToOrigin={true}
+                            dragSnapToOrigin
                             style={{ x: gesture.x }}
                             onDragEnd={gesture.handleDragEnd}
                             onPointerDown={() => gesture.setIsPressing(true)}
@@ -66,11 +71,8 @@ export function UniversalRowItem({ type, item, index, onSwipeLeft, onSwipeRight,
                                 ${isItemDisabled ? ERP_THEME.card.rowDisabled : 'bg-white hover:bg-slate-50/50'}
                                 ${gesture.isPressing ? 'border-indigo-400/50' : ''}`}
                         >
-                            <div className="flex items-center justify-center">
-                                <div
-                                    onClick={() => onThumbClick(item)}
-                                    className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-100 overflow-hidden shadow-3xs flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform shrink-0 border-slate-800"
-                                >
+                            <div className="flex items-center justify-center" data-ui-key={isProducts ? undefined : UI_KEYS.ingredients.rowThumbnail}>
+                                <div onClick={() => onThumbClick(item)} className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-100 overflow-hidden shadow-3xs flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform shrink-0 border-slate-800">
                                     {item.thumbnail
                                         ? <img src={item.thumbnail} alt={item.name} className="w-full h-full object-cover pointer-events-none" />
                                         : <span className="text-[9px] font-black text-white pointer-events-none tracking-widest">{isProducts ? 'BOX' : 'MAT'}</span>}
@@ -79,7 +81,7 @@ export function UniversalRowItem({ type, item, index, onSwipeLeft, onSwipeRight,
 
                             <div className="px-3 font-mono font-bold tracking-tight text-slate-500 tabular-nums truncate">{item.sku}</div>
 
-                            <div className="px-3 min-w-0 text-left">
+                            <div className="px-3 min-w-0 text-left" data-ui-key={isProducts ? undefined : UI_KEYS.ingredients.rowName}>
                                 <div className="font-black text-slate-800 text-xs truncate">{item.name}</div>
                                 {isProducts && (
                                     <div className="text-[10px] text-slate-400 font-bold truncate">
@@ -90,27 +92,23 @@ export function UniversalRowItem({ type, item, index, onSwipeLeft, onSwipeRight,
 
                             {isProducts && productMetrics ? (
                                 <>
-                                    <div className="px-3 text-right font-semibold text-slate-400 tabular-nums truncate">
-                                        {formatCurrencyBRL(productMetrics.recipeCost * productMetrics.unitsBatch)}
-                                    </div>
+                                    <div className="px-3 text-right font-semibold text-slate-400 tabular-nums truncate">{formatCurrencyBRL(productMetrics.recipeCost * productMetrics.unitsBatch)}</div>
                                     <div className="px-3 text-center font-bold text-slate-500 tabular-nums truncate">{productMetrics.unitsBatch}</div>
                                     <div className="px-3 text-right font-bold text-slate-600 tabular-nums truncate">{formatCurrencyBRL(productMetrics.recipeCost)}</div>
                                     <div className="px-3 text-right font-black text-slate-900 tabular-nums truncate">{formatCurrencyBRL(productMetrics.totalUnitCost)}</div>
                                     <div className="px-4 text-center">
-                                        <span className="px-1.5 py-0.5 rounded-md font-black text-[10px] bg-amber-50 text-amber-700 border border-amber-200">
-                                            {item.abcCategory || 'C'}
-                                        </span>
+                                        <span className="px-1.5 py-0.5 rounded-md font-black text-[10px] bg-amber-50 text-amber-700 border border-amber-200">{item.abcCategory || 'C'}</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
-                                    <div className="px-3 text-right font-black text-slate-800 tabular-nums truncate">{formatCurrencyBRL(item.price)}</div>
-                                    <div className="px-3 text-center font-bold text-slate-600 tabular-nums truncate">{item.quantity}</div>
-                                    <div className="px-3 text-center font-semibold text-slate-500 truncate">{item.unit}</div>
+                                    <div className="px-3 text-right font-black text-slate-800 tabular-nums truncate" data-ui-key={UI_KEYS.ingredients.rowPrice}>{formatCurrencyBRL(item.price)}</div>
+                                    <div className="px-3 text-center font-bold text-slate-600 tabular-nums truncate" data-ui-key={UI_KEYS.ingredients.rowQuantity}>{item.quantity}</div>
+                                    <div className="px-3 text-center font-semibold text-slate-500 truncate" data-ui-key={UI_KEYS.ingredients.rowUnit}>{item.unit}</div>
                                 </>
                             )}
 
-                            <div className="flex items-center justify-center">
+                            <div className="flex items-center justify-center" data-ui-key={isProducts ? undefined : UI_KEYS.ingredients.rowStatus}>
                                 {item.status === 'ACTIVE'
                                     ? <span title="Registro Ativo" className="inline-flex"><ShieldCheck className="w-4 h-4 text-emerald-600" /></span>
                                     : <span title="Registro Desativado" className="inline-flex"><ShieldAlert className="w-4 h-4 text-red-500" /></span>}

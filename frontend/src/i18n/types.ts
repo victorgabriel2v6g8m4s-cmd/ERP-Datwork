@@ -28,6 +28,26 @@ export interface AppTextDictionary {
     errors: { create: (message: string) => string; update: (message: string) => string; createFallback: string; updateFallback: string };
     media: { coverLabel: string; coverAlt: string; galleryLabel: string };
   };
+  ingredients: {
+    page: {
+      title: string; subtitle: string; totalKpi: string; averageCostKpi: string; itemSuffix: string;
+      loading: string; emptyState: string; createActionTitle: string;
+    };
+    search: { placeholder: string; costSort: string; unitFilterLabel: string; allUnits: string; profilePrefix: string };
+    columns: { thumbnail: string; sku: string; name: string; price: string; quantity: string; unit: string; status: string };
+    form: {
+      identification: string; sku: string; skuPlaceholder: string; name: string; namePlaceholder: string;
+      metrics: string; price: string; pricePlaceholder: string; quantity: string; unit: string;
+      media: string; cover: string; coverAlt: string; gallery: string;
+    };
+    wizard: { title: string; step: (current: number, total: number) => string; steps: string[]; next: string; finish: string };
+    edit: { title: string; save: string };
+    view: { price: string; quantity: string; history: string };
+    status: { deactivate: string; reactivate: string };
+    errors: {
+      load: string; create: string; update: string; status: string; reorder: string; history: string; upload: string; invalidResponse: string;
+    };
+  };
   recipes: {
     page: { title: string; subtitle: string; activeKpi: string; averageBatchCostKpi: string; unitSuffix: string; emptyState: string; createActionTitle: string };
     card: { reactivate: string; deactivate: string; inactiveBadge: string; batchCost: string; unitCost: string; yield: string };
@@ -107,9 +127,7 @@ export interface AppTextDictionary {
     };
     view: { timeLabel: string; dateLabel: string; subStatusLabel: string; notesLabel: string };
     confirm: { cancelTitle: string; cancelDescription: string };
-    calendar: {
-      back: string; rangeAction: string; loading: string; months: string[]; weekHeaders: string[];
-    };
+    calendar: { back: string; rangeAction: string; loading: string; months: string[]; weekHeaders: string[] };
     cascade: {
       title: string; movedPosition: (position: number) => string; postponeTab: string; advanceTab: string;
       intervalHint: string; originalTime: (time: string) => string; empty: string; keep: string; submit: (count: number) => string;

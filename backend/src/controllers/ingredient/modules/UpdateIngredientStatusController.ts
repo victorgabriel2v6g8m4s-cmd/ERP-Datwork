@@ -1,35 +1,26 @@
-import { type Request, type Response } from 'express';
-// 🌟 Acoplamento direto com a instância centralizadora de serviços e enums do Prisma
+import type { Request, Response } from 'express';
 import { ingredientService } from '../../../services/ingredient/IngredientServiceHandler.js';
-import { ProductStatus } from '@prisma/client';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { parseIngredientId, parseIngredientStatus } from '../utils/IngredientRequestValidator.js';
 
 export class UpdateIngredientStatusController {
-    async handle(req: Request, res: Response): Promise<Response> {
-        const { id } = req.params;
-        const { status } = req.body;
+  async handle(req: Request, res: Response): Promise<Response> {
+    try {
+      const id = parseIngredientId(req.params.id);
+      const status = parseIngredientStatus(req.body);
+      const ingredient = await ingredientService.updateStatus.execute(id, status);
+      return res.status(200).json(ingredient);
+    } catch (error) {
+      if (error instanceof Error && (error.message === 'InvalidIngredientPayload' || error.message === 'InvalidIngredientStatus')) {
+        return res.status(400).json({ error: 'Status do insumo inválido.' });
+      }
 
-        CustomLogger.info(`Recebendo requisição HTTP para alteração rápida de status do insumo ${id} para ${status}`);
+      if (error instanceof Error && error.message === 'IngredientNotFoundException') {
+        return res.status(404).json({ error: 'Insumo não encontrado.' });
+      }
 
-        // 🛡️ Validação defensiva rígida: garante que o ID é uma string e blinda contra 'string[]'
-        if (!id || typeof id !== 'string' || status !== ProductStatus.ACTIVE && status !== ProductStatus.INACTIVE) {
-            CustomLogger.warn(`Requisição rejeitada na camada HTTP: ID inválido ou status incorreto: ${status}`);
-            return res.status(400).json({ error: 'Parâmetros inválidos. O ID deve ser um texto e o status ACTIVE ou INACTIVE.' });
-        }
-
-        try {
-            // ✨ Otimização: Consome diretamente a instância unificada (rebatizada para updateStatus)
-            const ingredient = await ingredientService.updateStatus.execute(id, status as ProductStatus);
-
-            return res.status(200).json(ingredient);
-        } catch (error: any) {
-            if (error.message === 'IngredientNotFoundException') {
-                CustomLogger.warn(`Alteração de status abortada na camada HTTP: Insumo ID ${id} não existe`);
-                return res.status(404).json({ error: 'O insumo solicitado não foi encontrado no sistema.' });
-            }
-
-            CustomLogger.error(`Erro crítico não tratado ao alterar status do insumo ${id}`, error);
-            return res.status(500).json({ error: 'Erro interno do servidor ao mutar status do insumo.' });
-        }
+      CustomLogger.error('[Ingredients] Failed to update ingredient status', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
+  }
 }

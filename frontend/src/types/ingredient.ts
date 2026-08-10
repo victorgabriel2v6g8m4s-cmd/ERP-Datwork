@@ -1,7 +1,6 @@
-export interface IngredientVersionInfo {
-  id: string;
-  versionDate: string;
-}
+import type { MediaItem } from './media.ts';
+
+export type IngredientStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface Ingredient {
   id: string;
@@ -9,11 +8,17 @@ export interface Ingredient {
   name: string;
   price: number;
   quantity: number;
-  unit: 'Unidades' | 'Gramas' | 'Quilos' | 'MLs' | 'Centímetros' | 'Metros' | string;
-  thumbnail?: string | null;
-  status: 'ACTIVE' | 'INACTIVE';
+  unit: string;
+  thumbnail: string | null;
+  medias: MediaItem[];
+  status: IngredientStatus;
   position: number;
   createdAt: string;
   updatedAt: string;
-  versions?: IngredientVersionInfo[];
+}
+
+export interface IngredientVersion {
+  id: string;
+  versionDate: string;
+  snapshotData: unknown;
 }

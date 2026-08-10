@@ -1,34 +1,39 @@
 import prismaClient from '../../../config/prisma.js';
-import { type Ingredient, ProductStatus, Prisma } from '@prisma/client';
+import { Prisma, ProductStatus } from '@prisma/client';
+import type { IngredientResponse, IngredientStatus } from '../../../contracts/ingredient/IngredientContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-import { createSnapshot } from '../../../utils/snapshotAuditor.js';
+import { presentIngredient } from '../../../presenters/ingredient/IngredientPresenter.js';
+import { toIngredientSnapshotJson } from '../utils/IngredientJson.js';
 
 export class UpdateIngredientStatusService {
-    async execute(id: string, status: ProductStatus): Promise<Ingredient> {
-        CustomLogger.info(`Alterando status do insumo ${id} para ${status}`);
+  async execute(id: string, status: IngredientStatus): Promise<IngredientResponse> {
+    CustomLogger.info(`[Ingredients] Updating status for ${id} to ${status}`);
 
-        try {
-            return await prismaClient.$transaction(async (tx) => {
-                // 1. Otimização: Tenta atualizar o status direto
-                const updatedIngredient = await tx.ingredient.update({
-                    where: { id },
-                    data: { status }
-                });
+    try {
+      return await prismaClient.$transaction(async (tx) => {
+        const updated = await tx.ingredient.update({
+          where: { id },
+          data: { status: status === 'ACTIVE' ? ProductStatus.ACTIVE : ProductStatus.INACTIVE }
+        });
 
-                // 📜 2. ✨ Reaproveita o assistente de auditoria universal de forma limpa e atômica
-                await createSnapshot('ingredientVersion', 'ingredientId', updatedIngredient.id, updatedIngredient);
+        const presented = presentIngredient(updated);
+        await tx.ingredientVersion.create({
+          data: {
+            ingredientId: updated.id,
+            snapshotData: toIngredientSnapshotJson(presented),
+            versionDate: updated.updatedAt
+          }
+        });
 
-                return updatedIngredient;
-            });
+        return presented;
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new Error('IngredientNotFoundException');
+      }
 
-        } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-                CustomLogger.warn(`Tentativa de alteração de status falhou: Insumo ID ${id} não encontrado`);
-                throw new Error('IngredientNotFoundException');
-            }
-
-            CustomLogger.error(`Falha ao alterar status do insumo ${id}`, error);
-            throw error;
-        }
+      CustomLogger.error(`[Ingredients] Failed to update status for ${id}`, error);
+      throw error;
     }
+  }
 }

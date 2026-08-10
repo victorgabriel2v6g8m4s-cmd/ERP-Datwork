@@ -1,4 +1,5 @@
 import { AGENDA_THEME } from './agenda.ts';
+import { INGREDIENTS_THEME } from './ingredients.ts';
 
 export const ERP_THEME = {
     card: {
@@ -35,6 +36,8 @@ export const ERP_THEME = {
         inactive: 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100',
         pinnedBadge: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border border-amber-200 bg-amber-50 text-amber-700 font-black'
     },
+
+    ingredients: INGREDIENTS_THEME,
 
     recipes: {
         page: {

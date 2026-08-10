@@ -9,7 +9,17 @@ export const APP_CONFIG = {
     endpoints: {
       uploads: {
         products: '/products/upload',
+        ingredients: '/ingredients/upload',
         appointments: '/appointments/upload'
+      },
+      ingredients: {
+        catalog: '/ingredients',
+        item: (id: string) => `/ingredients/${encodeURIComponent(id)}`,
+        status: (id: string) => `/ingredients/${encodeURIComponent(id)}/status`,
+        reorder: '/ingredients/reorder',
+        versions: (id: string) => `/ingredients/${encodeURIComponent(id)}/versions`,
+        orderProfiles: '/ingredients/orders',
+        orderProfile: (id: string) => `/ingredients/orders/${encodeURIComponent(id)}`
       },
       pricing: {
         products: '/pricing/products',
@@ -43,6 +53,16 @@ export const APP_CONFIG = {
       abcCategory: 'C',
       includeFixedCosts: 'DEFAULT',
       unitsPerBatch: 1
+    }
+  },
+  ingredients: {
+    defaults: {
+      unit: 'Unidades'
+    },
+    units: ['Unidades', 'Gramas', 'Quilos', 'MLs', 'Centímetros', 'Metros'] as const,
+    limits: {
+      minPrice: 0,
+      minQuantity: 0.01
     }
   },
   recipes: {
