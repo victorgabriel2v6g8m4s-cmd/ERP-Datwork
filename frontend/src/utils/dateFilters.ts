@@ -28,13 +28,10 @@ export function isDateInPeriod(dateString: string, period: DatePeriod, customRan
 
     // ✨ Se o usuário escolheu o filtro mas ainda não preencheu AMBOS os campos, lista tudo por padrão
     if (!start || !end) {
-      console.log(`[DEBUG COMPARAÇÃO] Aguardando preenchimento total do intervalo...`);
       return true;
     }
 
     const isInside = itemDateString >= start && itemDateString <= end;
-
-    console.log(`[DEBUG COMPARAÇÃO] Banco: "${itemDateString}" | Filtro Início: "${start}" | Filtro Fim: "${end}" -> Passou no Filtro? ${isInside ? "SIM ✅" : "NÃO ❌"}`);
 
     return isInside;
   }

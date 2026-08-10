@@ -18,7 +18,10 @@ globalThis.localStorage = {
 
 globalThis.window = globalThis;
 
-const { parseProductOrderPositions } = await import('../src/pages/Products/services/products.service.ts');
+const {
+    parseProductOrderPositions,
+    parseProductOrderProfiles
+} = await import('../src/pages/Products/services/products.service.ts');
 
 test('parseProductOrderPositions accepts arrays and normalizes numeric positions', () => {
     const result = parseProductOrderPositions([
@@ -52,6 +55,18 @@ test('parseProductOrderPositions rejects malformed, duplicate and unsafe positio
 
     assert.deepEqual(result, [{ id: 'product-a', position: 0 }]);
     assert.deepEqual(parseProductOrderPositions('{invalid-json'), []);
+});
+
+test('parseProductOrderProfiles validates the list envelope and normalizes records', () => {
+    assert.equal(parseProductOrderProfiles({ profiles: [] }), null);
+    assert.deepEqual(parseProductOrderProfiles([
+        { id: ' profile-a ', name: ' Principal ', positions: '[{"id":"product-a","position":0}]' },
+        { id: '', name: 'Invalid', positions: [] }
+    ]), [{
+        id: 'profile-a',
+        name: 'Principal',
+        positions: '[{"id":"product-a","position":0}]'
+    }]);
 });
 
 test('Products UI and orchestration do not bypass service boundaries', async () => {

@@ -15,7 +15,6 @@ export function LoginPage() {
 
     // Validação de acesso simulada profissional
     if (username.trim() && password.trim()) {
-      console.log(`[AUTH] Usuário "${username}" autenticado com sucesso.`);
       navigate('/home'); // Push na URL para a Homepage Central
     } else {
       setError('Por favor, preencha todos os campos obrigatórios.');

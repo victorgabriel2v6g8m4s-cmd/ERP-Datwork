@@ -8,6 +8,11 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       attachFile: 'Anexar Arquivo', chooseImage: 'Escolher Imagem', replaceCover: 'Substituir Capa', saveCurrentOrder: 'Salvar Ordem Atual'
     },
     status: { loading: 'Carregando módulo...', uploading: 'Enviando...', saving: 'Salvando...' },
+    pageLoadError: {
+      title: 'Não foi possível carregar esta página',
+      description: 'Atualize a aplicação para tentar carregar o módulo novamente.',
+      retry: 'Tentar novamente'
+    },
     search: {
       filters: 'Filtros', sortCriterion: 'Critério de Ordenação', customOrder: 'Ordem customizada (Sua ordenação tátil)',
       alphabetical: 'Nome em ordem alfabética (A-Z)', recentDate: 'Data de cadastro (Mais recentes)', clearFilters: 'Limpar Filtros'

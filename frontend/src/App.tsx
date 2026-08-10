@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { PageErrorBoundary } from './components/PageErrorBoundary.tsx';
 import { TEXTS } from './i18n/index.ts';
 import { ERP_THEME } from './theme/presets.ts';
 import { UI_KEYS } from './ui/keys.ts';
@@ -27,9 +28,11 @@ function RouteLoading() {
   );
 }
 
-export default function App() {
+function PageRoutes() {
+  const location = useLocation();
+
   return (
-    <BrowserRouter>
+    <PageErrorBoundary key={location.key}>
       <Suspense fallback={<RouteLoading />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -54,6 +57,14 @@ export default function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Suspense>
+    </PageErrorBoundary>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <PageRoutes />
     </BrowserRouter>
   );
 }

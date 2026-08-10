@@ -6,6 +6,7 @@ export interface AppTextDictionary {
       attachFile: string; chooseImage: string; replaceCover: string; saveCurrentOrder: string;
     };
     status: { loading: string; uploading: string; saving: string };
+    pageLoadError: { title: string; description: string; retry: string };
     search: {
       filters: string;
       sortCriterion: string;

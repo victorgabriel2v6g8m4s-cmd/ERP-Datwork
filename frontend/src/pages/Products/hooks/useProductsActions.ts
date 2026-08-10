@@ -9,6 +9,7 @@ import {
     type ProductOrderProfile
 } from '../services/products.service.ts';
 import { type ProductMutationPayload } from '../types/product-form.types.ts';
+import { getToggledProductStatus } from '../utils/productStatus.ts';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -56,6 +57,11 @@ export function useProductsActions() {
         }
     }, []);
 
+    const handleReorderError = useCallback(async (error: unknown) => {
+        CustomLogger.error('[Products] Failed to persist product order. Restoring server order', error);
+        await fetchProducts();
+    }, [fetchProducts]);
+
     const {
         activeItem: selectedProduct,
         setActiveItem: setSelectedProduct,
@@ -65,13 +71,25 @@ export function useProductsActions() {
         setViewModalOpen: setIsViewModalOpen,
         actions
     } = useGridGestures<Product>({
-        endpoint: '/products',
         currentList: products,
         setListState: setProducts,
-        onRefresh: fetchProducts,
-        skipConfirmDelete: true,
-        refreshAfterSoftDelete: false
+        persistReorder: productsService.reorder,
+        onReorderError: handleReorderError
     });
+
+    const toggleProductStatus = useCallback(async (product: Product) => {
+        const nextStatus = getToggledProductStatus(product.status);
+        setProducts((current) => current.map((item) =>
+            item.id === product.id ? { ...item, status: nextStatus } : item
+        ));
+
+        try {
+            await productsService.updateStatus(product.id, nextStatus);
+        } catch (error) {
+            CustomLogger.error(`[Products] Failed to update status for product ${product.id}`, error);
+            await fetchProducts();
+        }
+    }, [fetchProducts]);
 
     const handleCreateProduct = async (payload: ProductMutationPayload) => {
         CustomLogger.info('[Products] Creating product');
@@ -161,6 +179,9 @@ export function useProductsActions() {
         handleSaveNewOrderProfile,
         handleRenameOrderProfile,
         handleDeleteOrderProfile,
-        actions
+        actions: {
+            ...actions,
+            toggleStatus: toggleProductStatus
+        }
     };
 }

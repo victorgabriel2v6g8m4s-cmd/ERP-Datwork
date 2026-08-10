@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { PackagePlus, SlidersHorizontal, Package } from 'lucide-react';
 import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
+import type { Product } from '../../types/product.ts';
 
 import {
     UniversalSearchBar,
@@ -17,6 +18,7 @@ import { ViewProductModal } from './components/ViewProductModal.tsx';
 import { useProductsActions } from './hooks/useProductsActions.ts';
 import { useProductsFilters } from './hooks/useProductsFilters.ts';
 import { PRODUCTS_TABLE_COLUMNS } from './constants/products.constants.ts';
+import type { ProductOrderPosition } from './services/products.service.ts';
 
 export function ProductsPage() {
     const actionsState = useProductsActions();
@@ -81,7 +83,7 @@ export function ProductsPage() {
                     onSaveNewProfile={actionsState.handleSaveNewOrderProfile}
                     onRenameProfile={actionsState.handleRenameOrderProfile}
                     onDeleteProfile={handleDeleteOrderProfile}
-                    onSelectProfilePositions={(positions) =>
+                    onSelectProfilePositions={(positions: ProductOrderPosition[]) =>
                         actionsState.setProducts(filters.applyProfilePositions(positions))
                     }
                 />
@@ -99,17 +101,17 @@ export function ProductsPage() {
                                         columns={PRODUCTS_TABLE_COLUMNS}
                                         data={filters.filteredProducts}
                                         isDraggableList={true}
-                                        renderDraggableRow={(product, index) => (
+                                        renderDraggableRow={(product: Product, index: number) => (
                                             <UniversalRowItem
                                                 key={product.id}
                                                 type="products"
                                                 item={product}
                                                 index={index}
-                                                onSwipeLeft={(item) =>
-                                                    actionsState.actions.triggerSoftDelete(item, 'INACTIVE', 'ACTIVE')
+                                                onSwipeLeft={(item: Product) =>
+                                                    void actionsState.actions.toggleStatus(item)
                                                 }
                                                 onSwipeRight={(id) => actionsState.actions.openEditModal(id)}
-                                                onThumbClick={(item) => actionsState.actions.openViewModal(item)}
+                                                onThumbClick={(item: Product) => actionsState.actions.openViewModal(item)}
                                             />
                                         )}
                                     />

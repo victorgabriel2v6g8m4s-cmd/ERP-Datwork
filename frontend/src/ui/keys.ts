@@ -1,6 +1,10 @@
 export const UI_KEYS = {
   app: {
-    routeLoading: 'app.route.loading'
+    routeLoading: 'app.route.loading',
+    routeError: 'app.route.error',
+    routeErrorTitle: 'app.route.error.title',
+    routeErrorDescription: 'app.route.error.description',
+    routeErrorRetry: 'app.route.error.retry'
   },
   recipes: {
     page: 'recipes.page', headerTitle: 'recipes.header.title', headerSubtitle: 'recipes.header.subtitle', search: 'recipes.search',

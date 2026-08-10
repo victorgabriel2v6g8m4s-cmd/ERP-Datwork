@@ -11,6 +11,9 @@ test('application config centralizes API, locale and product thumbnail rules', (
   assert.equal(APP_CONFIG.api.baseUrl, 'http://localhost:3333');
   assert.equal(APP_CONFIG.api.timeoutMs, 15_000);
   assert.equal(APP_CONFIG.api.endpoints.uploads.products, '/products/upload');
+  assert.equal(APP_CONFIG.api.endpoints.products.status('a b'), '/products/a%20b/status');
+  assert.equal(APP_CONFIG.api.endpoints.products.reorder, '/products/reorder');
+  assert.equal(APP_CONFIG.api.endpoints.products.orderProfile('a/b'), '/products/orders/a%2Fb');
   assert.equal(APP_CONFIG.uploads.productThumbnail.maxSizeBytes, 5 * 1024 * 1024);
   assert.equal(formatMegabytes(APP_CONFIG.uploads.productThumbnail.maxSizeBytes), '5 MB');
 });
@@ -20,6 +23,7 @@ test('application routes are split into lazy page bundles', async () => {
 
   assert.match(appSource, /lazy\(\(\) => import\('\.\/pages\/Products\/ProductsPage\.tsx'\)/);
   assert.match(appSource, /Suspense fallback=/);
+  assert.match(appSource, /PageErrorBoundary/);
   assert.doesNotMatch(appSource, /import \{ ProductsPage \} from/);
 });
 

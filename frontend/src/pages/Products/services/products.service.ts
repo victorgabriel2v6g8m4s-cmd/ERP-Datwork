@@ -1,5 +1,6 @@
 import { api } from '../../../api/client.ts';
-import { type Product } from '../../../types/product.ts';
+import { APP_CONFIG } from '../../../config/app.config.ts';
+import { type Product, type ProductStatus } from '../../../types/product.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import { parseProductList, parseProductResponse } from '../../../utils/productContract.ts';
 import { type ProductMutationPayload, type ProductVersion } from '../types/product-form.types.ts';
@@ -90,6 +91,15 @@ function normalizeOrderProfile(profile: unknown): ProductOrderProfile | null {
     };
 }
 
+export function parseProductOrderProfiles(value: unknown): ProductOrderProfile[] | null {
+    if (!Array.isArray(value)) return null;
+
+    const rawProfiles: unknown[] = value;
+    return rawProfiles
+        .map(normalizeOrderProfile)
+        .filter((profile): profile is ProductOrderProfile => profile !== null);
+}
+
 function normalizeProductVersion(version: unknown): ProductVersion | null {
     if (!isRecord(version)) return null;
 
@@ -109,7 +119,7 @@ function normalizeProductVersion(version: unknown): ProductVersion | null {
 
 export const productsService = {
     async list(): Promise<Product[]> {
-        const response = await api.get<unknown>('/products');
+        const response = await api.get<unknown>(APP_CONFIG.api.endpoints.products.catalog);
         const products = parseProductList(response.data);
 
         if (!products) {
@@ -121,17 +131,25 @@ export const productsService = {
     },
 
     async create(payload: ProductMutationPayload): Promise<Product> {
-        const response = await api.post<unknown>('/products', payload);
+        const response = await api.post<unknown>(APP_CONFIG.api.endpoints.products.catalog, payload);
         return requireProductResponse(response.data, 'create');
     },
 
     async update(id: string, payload: ProductMutationPayload): Promise<Product> {
-        const response = await api.put<unknown>(`/products/${id}`, payload);
+        const response = await api.put<unknown>(APP_CONFIG.api.endpoints.products.item(id), payload);
         return requireProductResponse(response.data, 'update');
     },
 
+    async updateStatus(id: string, status: ProductStatus): Promise<void> {
+        await api.patch(APP_CONFIG.api.endpoints.products.status(id), { status });
+    },
+
+    async reorder(positions: ProductOrderPosition[]): Promise<void> {
+        await api.patch(APP_CONFIG.api.endpoints.products.reorder, { positions });
+    },
+
     async listVersions(productId: string): Promise<ProductVersion[]> {
-        const response = await api.get<unknown>(`/products/${productId}/versions`);
+        const response = await api.get<unknown>(APP_CONFIG.api.endpoints.products.versions(productId));
 
         if (!Array.isArray(response.data)) {
             CustomLogger.warn(`[Products] Invalid version history response for product ${productId}`);
@@ -144,22 +162,26 @@ export const productsService = {
     },
 
     async listOrderProfiles(): Promise<ProductOrderProfile[]> {
-        const response = await api.get<unknown[]>('/products/orders');
+        const response = await api.get<unknown>(APP_CONFIG.api.endpoints.products.orderProfiles);
+        const profiles = parseProductOrderProfiles(response.data);
 
-        return response.data
-            .map(normalizeOrderProfile)
-            .filter((profile): profile is ProductOrderProfile => profile !== null);
+        if (!profiles) {
+            CustomLogger.error('[Products] Invalid order profile list contract received from API');
+            throw new Error('InvalidProductOrderProfileListContract');
+        }
+
+        return profiles;
     },
 
     async createOrderProfile(name: string, positions: ProductOrderPosition[]): Promise<void> {
-        await api.post('/products/orders', { name, positions });
+        await api.post(APP_CONFIG.api.endpoints.products.orderProfiles, { name, positions });
     },
 
     async renameOrderProfile(id: string, name: string): Promise<void> {
-        await api.put(`/products/orders/${id}`, { name });
+        await api.put(APP_CONFIG.api.endpoints.products.orderProfile(id), { name });
     },
 
     async deleteOrderProfile(id: string): Promise<void> {
-        await api.delete(`/products/orders/${id}`);
+        await api.delete(APP_CONFIG.api.endpoints.products.orderProfile(id));
     }
 };

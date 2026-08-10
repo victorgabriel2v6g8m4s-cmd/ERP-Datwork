@@ -3,7 +3,14 @@ import { INGREDIENTS_THEME } from './ingredients.ts';
 
 export const ERP_THEME = {
     app: {
-        routeLoading: 'min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-bold animate-pulse'
+        routeLoading: 'min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-bold animate-pulse',
+        routeError: {
+            shell: 'min-h-screen flex items-center justify-center bg-slate-50 p-6 text-center',
+            card: 'w-full max-w-md rounded-3xl border border-rose-100 bg-white p-8 shadow-sm space-y-4',
+            title: 'text-lg font-black text-slate-900',
+            description: 'text-sm font-medium text-slate-500',
+            retry: 'inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-indigo-700'
+        }
     },
     card: {
         base: 'flex items-center justify-between p-4 rounded-2xl shadow-sm border transition-all select-none touch-pan-y',

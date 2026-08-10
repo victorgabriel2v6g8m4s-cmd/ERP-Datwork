@@ -18,7 +18,13 @@ export const APP_CONFIG = {
         appointments: '/appointments/upload'
       },
       products: {
-        catalog: '/products'
+        catalog: '/products',
+        item: (id: string) => `/products/${encodeURIComponent(id)}`,
+        status: (id: string) => `/products/${encodeURIComponent(id)}/status`,
+        reorder: '/products/reorder',
+        versions: (id: string) => `/products/${encodeURIComponent(id)}/versions`,
+        orderProfiles: '/products/orders',
+        orderProfile: (id: string) => `/products/orders/${encodeURIComponent(id)}`
       },
       ingredients: {
         catalog: '/ingredients',
