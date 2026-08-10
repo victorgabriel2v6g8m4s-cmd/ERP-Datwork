@@ -7,7 +7,7 @@ export const PT_BR_TEXTS: AppTextDictionary = {
       cancel: 'Cancelar', confirm: 'Confirmar', update: 'Atualizar', back: 'Voltar', close: 'Fechar',
       attachFile: 'Anexar Arquivo', chooseImage: 'Escolher Imagem', replaceCover: 'Substituir Capa', saveCurrentOrder: 'Salvar Ordem Atual'
     },
-    status: { uploading: 'Enviando...', saving: 'Salvando...' },
+    status: { loading: 'Carregando módulo...', uploading: 'Enviando...', saving: 'Salvando...' },
     search: {
       filters: 'Filtros', sortCriterion: 'Critério de Ordenação', customOrder: 'Ordem customizada (Sua ordenação tátil)',
       alphabetical: 'Nome em ordem alfabética (A-Z)', recentDate: 'Data de cadastro (Mais recentes)', clearFilters: 'Limpar Filtros'
@@ -92,7 +92,8 @@ export const PT_BR_TEXTS: AppTextDictionary = {
     errors: {
       load: 'Não foi possível carregar as fichas técnicas.', formOptions: 'Não foi possível carregar produtos e insumos para o formulário.',
       create: (message) => `Erro: ${message}`, update: (message) => `Erro ao atualizar: ${message}`, createFallback: 'Falha ao salvar a ficha técnica.',
-      updateFallback: 'Falha ao atualizar a ficha técnica.', invalidResponse: 'O servidor retornou uma ficha técnica em formato inválido.'
+      updateFallback: 'Falha ao atualizar a ficha técnica.', status: 'Não foi possível alterar o status da ficha técnica.',
+      reorder: 'Não foi possível salvar a nova ordem das fichas técnicas.', invalidResponse: 'O servidor retornou uma ficha técnica em formato inválido.'
     }
   },
   pricing: {

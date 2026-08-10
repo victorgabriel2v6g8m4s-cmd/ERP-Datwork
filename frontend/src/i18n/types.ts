@@ -5,7 +5,7 @@ export interface AppTextDictionary {
       cancel: string; confirm: string; update: string; back: string; close: string;
       attachFile: string; chooseImage: string; replaceCover: string; saveCurrentOrder: string;
     };
-    status: { uploading: string; saving: string };
+    status: { loading: string; uploading: string; saving: string };
     search: {
       filters: string;
       sortCriterion: string;
@@ -64,7 +64,7 @@ export interface AppTextDictionary {
     };
     errors: {
       load: string; formOptions: string; create: (message: string) => string; update: (message: string) => string;
-      createFallback: string; updateFallback: string; invalidResponse: string;
+      createFallback: string; updateFallback: string; status: string; reorder: string; invalidResponse: string;
     };
   };
   pricing: {

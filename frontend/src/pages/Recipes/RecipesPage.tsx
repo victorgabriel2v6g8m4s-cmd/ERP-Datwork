@@ -21,10 +21,11 @@ import { useRecipesFilters } from './hooks/useRecipesFilters.ts';
 export function RecipesPage() {
   const actions = useRecipesActions();
   const filters = useRecipesFilters(actions.recipes);
+  const { fetchRecipes } = actions;
 
   useEffect(() => {
-    void actions.fetchRecipes();
-  }, [actions.fetchRecipes]);
+    void fetchRecipes();
+  }, [fetchRecipes]);
 
   return (
     <div className={ERP_THEME.recipes.page.shell} data-ui-key={UI_KEYS.recipes.page}>

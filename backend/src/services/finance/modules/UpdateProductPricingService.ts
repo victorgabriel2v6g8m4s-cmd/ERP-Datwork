@@ -15,7 +15,7 @@ export class UpdateProductPricingService {
 
     try {
       await prismaClient.product.update({ where: { id }, data: updateData });
-      await PricingEngine.recalculateAll();
+      await PricingEngine.recalculateProducts([id]);
 
       const updated = await prismaClient.product.findUnique({
         where: { id },

@@ -1,4 +1,6 @@
-import { api } from '../api/client.ts'; // Importa a nossa instância do Axios
+import { api } from '../api/client.ts';
+import { APP_CONFIG } from '../config/app.config.ts';
+import { CustomLogger } from './CustomLogger.ts';
 
 export interface ViaCEPResponse {
   logradouro: string;
@@ -13,17 +15,16 @@ export async function fetchAddressByCEP(cep: string): Promise<ViaCEPResponse | n
   if (cleanCEP.length !== 8) return null;
 
   try {
-    // ✨ Bate no nosso próprio backend, eliminando o erro 'Failed to fetch'
-    const response = await api.get<ViaCEPResponse>(`/cep/${cleanCEP}`);
+    const response = await api.get<ViaCEPResponse>(APP_CONFIG.api.endpoints.utilities.cep(cleanCEP));
     
     if (response.data.erro) {
-      console.warn(`[CEP] O CEP "${cleanCEP}" não existe.`);
+      CustomLogger.warn(`[CEP] CEP ${cleanCEP} was not found`);
       return null;
     }
     
     return response.data;
   } catch (error) {
-    console.error('⚠️ Falha ao consultar o CEP através do Proxy do Servidor:', error);
+    CustomLogger.error('[CEP] Failed to query address through the backend proxy', error);
     return null;
   }
 }

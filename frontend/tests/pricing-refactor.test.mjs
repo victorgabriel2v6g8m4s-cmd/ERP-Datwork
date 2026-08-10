@@ -91,8 +91,8 @@ test('Pricing module uses service, text, theme and UI-key boundaries', async () 
   const sourceRoot = fileURLToPath(new URL('../src/pages/Pricing/', import.meta.url));
   const files = await collectTypeScriptFiles(sourceRoot);
   const sources = await Promise.all(files.map(async (file) => ({ file, source: await readFile(file, 'utf8') })));
-  const serviceSources = sources.filter(({ file }) => file.includes('/services/'));
-  const consumerSources = sources.filter(({ file }) => !file.includes('/services/'));
+  const serviceSources = sources.filter(({ file }) => file.replaceAll('\\', '/').includes('/services/'));
+  const consumerSources = sources.filter(({ file }) => !file.replaceAll('\\', '/').includes('/services/'));
   const allSource = sources.map(({ source }) => source).join('\n');
   const consumerSource = consumerSources.map(({ source }) => source).join('\n');
   const serviceSource = serviceSources.map(({ source }) => source).join('\n');
@@ -107,4 +107,13 @@ test('Pricing module uses service, text, theme and UI-key boundaries', async () 
   assert.match(allSource, /ERP_THEME\.pricing/);
   assert.match(allSource, /UI_KEYS\.pricing/);
   assert.doesNotMatch(allSource, /['"]\/pricing\/settings['"]/);
+});
+
+test('Pricing page shares one overview controller between header and product table', async () => {
+  const pageSource = await readFile(new URL('../src/pages/Pricing/PricingPage.tsx', import.meta.url), 'utf8');
+  const tabSource = await readFile(new URL('../src/pages/Pricing/components/TabProductsPricing.tsx', import.meta.url), 'utf8');
+
+  assert.equal((pageSource.match(/usePricingProducts\(\)/g) ?? []).length, 1);
+  assert.doesNotMatch(tabSource, /usePricingProducts\(\)/);
+  assert.doesNotMatch(pageSource, /usePricingMetrics/);
 });

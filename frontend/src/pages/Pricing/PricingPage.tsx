@@ -13,7 +13,7 @@ import { formatCurrencyBRL } from '../../utils/format.ts';
 import { PricingServicesPlaceholder } from './components/PricingServicesPlaceholder.tsx';
 import { TabProductsPricing } from './components/TabProductsPricing.tsx';
 import { TabSettings } from './components/TabSettings.tsx';
-import { usePricingMetrics } from './hooks/usePricingMetrics.ts';
+import { usePricingProducts } from './hooks/usePricingProducts.ts';
 
 type PricingSubTab = 'ajustes' | 'produtos' | 'servicos';
 
@@ -24,7 +24,7 @@ function resolvePricingSubTab(value: string | undefined): PricingSubTab {
 export function PricingPage() {
   const { subtab } = useParams<{ subtab: string }>();
   const currentActiveSubTab = resolvePricingSubTab(subtab);
-  const metrics = usePricingMetrics();
+  const pricing = usePricingProducts();
 
   const tabs = [
     { id: 'ajustes', label: TEXTS.pricing.tabs.settings, path: '/precificacao/ajustes', icon: Sliders },
@@ -43,13 +43,13 @@ export function PricingPage() {
           kpiCards={[
             {
               label: TEXTS.pricing.page.fixedCostKpi,
-              value: formatCurrencyBRL(metrics.metrics.fixedCostPerUnitFactor),
+              value: formatCurrencyBRL(pricing.metrics.fixedCostPerUnitFactor),
               icon: FixedIcon,
               valueColorClass: 'text-slate-800'
             },
             {
               label: TEXTS.pricing.page.variableExpensesKpi,
-              value: `${metrics.metrics.totalVariablePercent.toFixed(2)}%`,
+              value: `${pricing.metrics.totalVariablePercent.toFixed(2)}%`,
               icon: Percent,
               valueColorClass: 'text-indigo-600'
             }
@@ -65,8 +65,8 @@ export function PricingPage() {
         </div>
 
         <div className={ERP_THEME.pricing.page.panel} data-ui-key={UI_KEYS.pricing.panel}>
-          {currentActiveSubTab === 'ajustes' && <TabSettings onSaved={metrics.refresh} />}
-          {currentActiveSubTab === 'produtos' && <TabProductsPricing />}
+          {currentActiveSubTab === 'ajustes' && <TabSettings onSaved={pricing.reload} />}
+          {currentActiveSubTab === 'produtos' && <TabProductsPricing pricing={pricing} />}
           {currentActiveSubTab === 'servicos' && <PricingServicesPlaceholder />}
         </div>
       </main>

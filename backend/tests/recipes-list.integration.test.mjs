@@ -1,21 +1,14 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { createMigratedTestDatabase } from './helpers/create-test-database.mjs';
 
-const backendRoot = fileURLToPath(new URL('../', import.meta.url));
 const databasePath = fileURLToPath(new URL('../recipes-list-integration.db', import.meta.url));
 const databaseUrl = 'file:./recipes-list-integration.db';
-const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 process.env.DATABASE_URL = databaseUrl;
-
-execFileSync(npxCommand, ['prisma', 'migrate', 'deploy'], {
-  cwd: backendRoot,
-  env: { ...process.env, DATABASE_URL: databaseUrl },
-  stdio: 'pipe'
-});
+await createMigratedTestDatabase(databasePath);
 
 const { ListRecipesService } = await import('../dist/services/recipe/modules/ListRecipesService.js');
 const { default: prismaClient } = await import('../dist/config/prisma.js');

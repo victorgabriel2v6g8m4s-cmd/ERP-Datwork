@@ -1,38 +1,58 @@
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import multer from 'multer';
-import crypto from 'crypto';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { sanitizeFileName } from '../utils/fileSanitizer.js';
+import {
+  SERVER_CONFIG,
+  type AllowedUploadMimeType
+} from './serverConfig.js';
 import { CustomLogger } from '../logger/CustomLogger.js';
+import { sanitizeFileName } from '../utils/fileSanitizer.js';
+import { getSafeUploadExtension } from '../utils/uploadSecurity.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
+const baseUploadFolder = path.resolve(currentDirectory, '..', '..', 'uploads');
 
-// Pasta base raiz
-const baseUploadFolder = path.resolve(__dirname, '..', '..', 'uploads');
+function isAllowedMimeType(value: string): value is AllowedUploadMimeType {
+  return SERVER_CONFIG.uploads.allowedMimeTypes.some((mimeType) => mimeType === value);
+}
 
 export const upload = multer({
+  limits: {
+    fileSize: SERVER_CONFIG.uploads.maxSizeBytes,
+    files: 1,
+    fields: 2
+  },
+  fileFilter: (_req, file, callback) => {
+    if (!isAllowedMimeType(file.mimetype)) {
+      callback(new Error('UnsupportedUploadMimeType'));
+      return;
+    }
+    callback(null, true);
+  },
   storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      // 🔄 Puxa o usuário atual (futuramente req.user_id do JWT)
+    destination: (_req, _file, callback) => {
       const currentUserId = 'default_user';
-
-      // ✨ Define o caminho final isolado por usuário: uploads/default_user
       const userFolder = path.resolve(baseUploadFolder, currentUserId);
 
-      // ✨ Cria a pasta do usuário em tempo de execução se ela não existir!
       if (!fs.existsSync(userFolder)) {
-        CustomLogger.info(`[Multer] Criando subpasta isolada para o usuário: ${currentUserId}`);
+        CustomLogger.info(`[Uploads] Creating isolated directory for ${currentUserId}`);
         fs.mkdirSync(userFolder, { recursive: true });
       }
 
-      cb(null, userFolder);
+      callback(null, userFolder);
     },
-    filename: (req, file, cb) => {
-      const fileHash = crypto.randomBytes(8).toString('hex');
+    filename: (_req, file, callback) => {
+      if (!isAllowedMimeType(file.mimetype)) {
+        callback(new Error('UnsupportedUploadMimeType'), '');
+        return;
+      }
+
+      const fileHash = crypto.randomBytes(16).toString('hex');
       const cleanName = sanitizeFileName(file.originalname);
-      cb(null, `${fileHash}-${cleanName}`);
+      const baseName = path.basename(cleanName, path.extname(cleanName));
+      callback(null, `${fileHash}-${baseName}${getSafeUploadExtension(file.mimetype)}`);
     }
   })
 });

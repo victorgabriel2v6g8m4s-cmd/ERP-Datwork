@@ -1,105 +1,83 @@
+import { Prisma, ProductStatus } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
-import { PricingEngine } from '../../../math/PricingEngine.js';
-import { ProductStatus } from '@prisma/client';
+import type { CreateRecipeInput, RecipeResponse } from '../../../contracts/recipe/RecipeContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-
-interface IngredientInput {
-    ingredientId: string;
-    quantityNeeded: number;
-}
-
-interface CreateRecipeRequest {
-    productId: string;
-    unitsPerBatch: number;
-    ingredients: IngredientInput[];
-}
+import { PricingEngine } from '../../../math/PricingEngine.js';
+import { presentRecipe, RECIPE_RESPONSE_INCLUDE } from '../../../presenters/recipe/RecipePresenter.js';
+import { calculateRecipeCostPerUnit } from '../utils/RecipeCost.js';
 
 export class CreateRecipeService {
-    async execute({ productId, unitsPerBatch, ingredients }: CreateRecipeRequest) {
-        CustomLogger.info('Iniciando esteira de criação de receita relacionada', { productId });
+  async execute(data: CreateRecipeInput): Promise<RecipeResponse> {
+    CustomLogger.info('[Recipes] Creating recipe', { productId: data.productId });
 
-        const safeUnits = Math.max(1, Number(unitsPerBatch));
+    try {
+      const recipeId = await prismaClient.$transaction(async (tx) => {
+        const product = await tx.product.findUnique({
+          where: { id: data.productId },
+          select: { id: true, recipe: { select: { id: true } } }
+        });
 
-        try {
-            // ✨ Toda a esteira de validação e escrita unificada na transação (Isolamento total)
-            return await prismaClient.$transaction(async (tx) => {
+        if (!product) throw new Error('ProductNotFoundException');
+        if (product.recipe) throw new Error('RecipeAlreadyExistsForProductException');
 
-                // 1. Valida existência do produto alvo
-                const product = await tx.product.findUnique({
-                    where: { id: productId },
-                    select: { id: true } // Otimização
-                });
-                if (!product) throw new Error('ProductNotFoundException');
+        const recipeCostPerUnit = await calculateRecipeCostPerUnit(tx, data.ingredients, data.unitsPerBatch);
+        const lastRecipe = await tx.recipe.findFirst({
+          orderBy: { position: 'desc' },
+          select: { position: true }
+        });
 
-                // 2. Valida duplicidade de receita para o mesmo produto
-                const existingRecipe = await tx.recipe.findFirst({
-                    where: { productId },
-                    select: { id: true }
-                });
-                if (existingRecipe) throw new Error('RecipeAlreadyExistsForProductException');
+        const recipe = await tx.recipe.create({
+          data: {
+            productId: data.productId,
+            position: lastRecipe ? lastRecipe.position + 1 : 0,
+            unitsPerBatch: data.unitsPerBatch,
+            status: ProductStatus.ACTIVE,
+            items: {
+              createMany: {
+                data: data.ingredients.map((item) => ({
+                  ingredientId: item.ingredientId,
+                  quantityNeeded: item.quantityNeeded
+                }))
+              }
+            }
+          },
+          select: { id: true }
+        });
 
-                // 3. Determina a próxima posição linear da listagem
-                const lastRecipe = await tx.recipe.findFirst({
-                    orderBy: { position: 'desc' },
-                    select: { position: true }
-                });
-                const nextPosition = lastRecipe ? lastRecipe.position + 1 : 0;
+        await tx.product.update({
+          where: { id: data.productId },
+          data: { recipeCostPerUnit }
+        });
 
-                // 💾 4. Insere a Receita com o Enum correto do novo Schema
-                const recipe = await tx.recipe.create({
-                    data: {
-                        productId,
-                        position: nextPosition,
-                        unitsPerBatch: safeUnits,
-                        status: ProductStatus.ACTIVE // ✨ Enum estrito do Schema
-                    }
-                });
+        return recipe.id;
+      });
 
-                let calculatedRecipeCostPerUnit = 0;
+      CustomLogger.info('[Recipes] Recipe committed; recalculating dependent product pricing');
+      await PricingEngine.recalculateProducts([data.productId]);
 
-                // 🧮 5. Processamento dos Insumos e Engenharia de Custos
-                if (ingredients && ingredients.length > 0) {
-                    const dbIngredients = await tx.ingredient.findMany({
-                        where: { id: { in: ingredients.map(i => i.ingredientId) } }
-                    });
+      const recipe = await prismaClient.recipe.findUnique({
+        where: { id: recipeId },
+        include: RECIPE_RESPONSE_INCLUDE
+      });
+      if (!recipe) throw new Error('RecipeNotFoundException');
 
-                    // Engenharia funcional limpa: cria os itens para inserção em lote
-                    const recipeItemsData = ingredients.map(item => ({
-                        recipeId: recipe.id,
-                        ingredientId: item.ingredientId,
-                        quantityNeeded: item.quantityNeeded
-                    }));
+      return presentRecipe(recipe);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        CustomLogger.warn(`[Recipes] Product ${data.productId} already has a recipe`);
+        throw new Error('RecipeAlreadyExistsForProductException');
+      }
+      if (error instanceof Error && (
+        error.message === 'ProductNotFoundException' ||
+        error.message === 'RecipeAlreadyExistsForProductException' ||
+        error.message === 'RecipeIngredientNotFoundException'
+      )) {
+        CustomLogger.warn(`[Recipes] Create rejected: ${error.message}`);
+        throw error;
+      }
 
-                    // Calcula o custo total acumulado sem efeitos colaterais mutáveis no map
-                    const totalIngredientsCost = ingredients.reduce((sum, item) => {
-                        const ingBase = dbIngredients.find(db => db.id === item.ingredientId);
-                        const basePrice = ingBase ? ingBase.price : 0;
-                        const baseVolume = ingBase ? ingBase.quantity : 1;
-                        return sum + ((basePrice / baseVolume) * item.quantityNeeded);
-                    }, 0);
-
-                    calculatedRecipeCostPerUnit = totalIngredientsCost / safeUnits;
-
-                    // Salva os itens em lote no banco
-                    await tx.recipeItem.createMany({ data: recipeItemsData });
-                }
-
-                // ✨ 6. Sincroniza o custo de fabricação diretamente na tabela do produto
-                await tx.product.update({
-                    where: { id: productId },
-                    data: { recipeCostPerUnit: calculatedRecipeCostPerUnit }
-                });
-
-                CustomLogger.info(`Ficha técnica sincronizada. Rodando motor PricingEngine.`);
-
-                // 🚀 Executa o motor automático de precificação global
-                await PricingEngine.recalculateAll();
-
-                return recipe;
-            });
-        } catch (error) {
-            CustomLogger.error('Erro fatal na transação de gravação da ficha técnica', error);
-            throw error;
-        }
+      CustomLogger.error(`[Recipes] Failed to create recipe for product ${data.productId}`, error);
+      throw error;
     }
+  }
 }

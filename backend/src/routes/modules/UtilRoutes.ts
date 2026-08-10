@@ -1,4 +1,18 @@
 import { Router } from 'express';
+import { SERVER_CONFIG } from '../../config/serverConfig.js';
+import { CustomLogger } from '../../logger/CustomLogger.js';
+
+interface ViaCepResponse {
+    logradouro?: unknown;
+    bairro?: unknown;
+    localidade?: unknown;
+    uf?: unknown;
+    erro?: unknown;
+}
+
+function isViaCepResponse(value: unknown): value is ViaCepResponse {
+    return typeof value === 'object' && value !== null;
+}
 
 const utilRouter = Router();
 
@@ -12,27 +26,43 @@ utilRouter.get('/cep/:cep', async (req, res) => {
 
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 segundos de timeout
+        const timeoutId = setTimeout(
+            () => controller.abort(),
+            SERVER_CONFIG.externalServices.viaCep.timeoutMs
+        );
 
-        const response = await fetch(`https://viacep.com.br{cleanCEP}/json/`, {
-            method: 'GET',
-            signal: controller.signal,
-            headers: {
-                'User-Agent': 'ERP_System/1.0',
-                'Accept': 'application/json'
+        try {
+            const response = await fetch(
+                `${SERVER_CONFIG.externalServices.viaCep.baseUrl}/${cleanCEP}/json/`,
+                {
+                    method: 'GET',
+                    signal: controller.signal,
+                    headers: {
+                        'User-Agent': 'ERP-Datwork/1.0',
+                        'Accept': 'application/json'
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`ViaCepHttpStatus:${response.status}`);
             }
+
+            const data: unknown = await response.json();
+            if (!isViaCepResponse(data)) {
+                throw new Error('ViaCepInvalidResponse');
+            }
+
+            return res.status(200).json(data);
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    } catch (error: unknown) {
+        const timedOut = error instanceof Error && error.name === 'AbortError';
+        CustomLogger.error('[CEP] External lookup failed', error);
+        return res.status(timedOut ? 504 : 502).json({
+            error: timedOut ? 'CepServiceTimeout' : 'CepServiceUnavailable'
         });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) throw new Error(`ViaCEP falhou com status: ${response.status}`);
-
-        const data = await response.json();
-        return res.status(200).json(data);
-
-    } catch (error: any) {
-        console.error('🔥 [ERRO PROXY CEP]:', error.message);
-        return res.status(500).json({ error: 'Erro de conexão com o serviço externo de CEP.' });
     }
 });
 

@@ -1,15 +1,11 @@
 import { ProductStatus } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-import { PricingEngine } from '../../../math/PricingEngine.js';
 import { presentProduct } from '../../../presenters/product/ProductPresenter.js';
 import { type ProductResponse } from '../../../contracts/product/ProductContract.js';
 
 export class ListProductsService {
     async execute(): Promise<ProductResponse[]> {
-        CustomLogger.info('[Products] Sincronizando precificação antes de listar o catálogo');
-        await PricingEngine.recalculateAll();
-
         const products = await prismaClient.product.findMany({
             where: { status: ProductStatus.ACTIVE },
             orderBy: { position: 'asc' },

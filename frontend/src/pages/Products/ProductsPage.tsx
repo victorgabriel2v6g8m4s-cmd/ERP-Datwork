@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { PackagePlus, SlidersHorizontal, Package } from 'lucide-react';
-import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 
 import {
     UniversalSearchBar,
@@ -21,13 +21,14 @@ import { PRODUCTS_TABLE_COLUMNS } from './constants/products.constants.ts';
 export function ProductsPage() {
     const actionsState = useProductsActions();
     const filters = useProductsFilters(actionsState.products, actionsState.orderProfiles);
+    const { fetchOrderProfiles, fetchProducts } = actionsState;
 
     useEffect(() => {
-        actionsState.fetchProducts();
-        actionsState.fetchOrderProfiles();
-    }, []);
+        void fetchProducts();
+        void fetchOrderProfiles();
+    }, [fetchOrderProfiles, fetchProducts]);
 
-    const handleDragEnd = async (result: any) => {
+    const handleDragEnd = async (result: DropResult) => {
         if (!result.destination || result.destination.index === result.source.index) return;
 
         if (filters.activeFilters.sortBy !== 'custom') {

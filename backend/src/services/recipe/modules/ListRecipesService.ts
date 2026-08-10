@@ -1,37 +1,16 @@
 import prismaClient from '../../../config/prisma.js';
+import type { RecipeResponse } from '../../../contracts/recipe/RecipeContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { presentRecipeList, RECIPE_RESPONSE_INCLUDE } from '../../../presenters/recipe/RecipePresenter.js';
 
 export class ListRecipesService {
-  async execute() {
+  async execute(): Promise<RecipeResponse[]> {
     CustomLogger.info('[Recipes] Loading complete recipe catalog including inactive records');
 
-    return prismaClient.recipe.findMany({
+    const recipes = await prismaClient.recipe.findMany({
       orderBy: { position: 'asc' },
-      include: {
-        product: {
-          select: {
-            sku: true,
-            name: true,
-            thumbnail: true,
-            abcCategory: true,
-            recipeCostPerUnit: true,
-            indirectCost: true,
-            totalUnitCost: true
-          }
-        },
-        items: {
-          include: {
-            ingredient: {
-              select: {
-                name: true,
-                price: true,
-                quantity: true,
-                unit: true
-              }
-            }
-          }
-        }
-      }
+      include: RECIPE_RESPONSE_INCLUDE
     });
+    return presentRecipeList(recipes);
   }
 }

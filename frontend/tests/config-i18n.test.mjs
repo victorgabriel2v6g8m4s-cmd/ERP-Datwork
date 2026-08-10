@@ -9,9 +9,18 @@ const { validateProductThumbnailFile } = await import('../src/pages/Products/uti
 test('application config centralizes API, locale and product thumbnail rules', () => {
   assert.equal(APP_CONFIG.locale, 'pt-BR');
   assert.equal(APP_CONFIG.api.baseUrl, 'http://localhost:3333');
+  assert.equal(APP_CONFIG.api.timeoutMs, 15_000);
   assert.equal(APP_CONFIG.api.endpoints.uploads.products, '/products/upload');
   assert.equal(APP_CONFIG.uploads.productThumbnail.maxSizeBytes, 5 * 1024 * 1024);
   assert.equal(formatMegabytes(APP_CONFIG.uploads.productThumbnail.maxSizeBytes), '5 MB');
+});
+
+test('application routes are split into lazy page bundles', async () => {
+  const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+
+  assert.match(appSource, /lazy\(\(\) => import\('\.\/pages\/Products\/ProductsPage\.tsx'\)/);
+  assert.match(appSource, /Suspense fallback=/);
+  assert.doesNotMatch(appSource, /import \{ ProductsPage \} from/);
 });
 
 test('thumbnail validation composes configuration with translated copy', () => {

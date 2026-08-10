@@ -2,6 +2,7 @@ import prismaClient from '../../../config/prisma.js';
 import { Prisma } from '@prisma/client';
 import type { IngredientMutationInput, IngredientResponse } from '../../../contracts/ingredient/IngredientContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { PricingEngine } from '../../../math/PricingEngine.js';
 import { presentIngredient } from '../../../presenters/ingredient/IngredientPresenter.js';
 import { toIngredientMediaJson, toIngredientSnapshotJson } from '../utils/IngredientJson.js';
 
@@ -10,7 +11,7 @@ export class UpdateIngredientService {
     CustomLogger.info(`[Ingredients] Updating ingredient ${id}`);
 
     try {
-      return await prismaClient.$transaction(async (tx) => {
+      const result = await prismaClient.$transaction(async (tx) => {
         const updated = await tx.ingredient.update({
           where: { id },
           data: {
@@ -33,8 +34,19 @@ export class UpdateIngredientService {
           }
         });
 
-        return presented;
+        const recipeItems = await tx.recipeItem.findMany({
+          where: { ingredientId: id },
+          select: { recipe: { select: { productId: true } } }
+        });
+
+        return {
+          ingredient: presented,
+          productIds: [...new Set(recipeItems.map((item) => item.recipe.productId))]
+        };
       });
+
+      await PricingEngine.recalculateProducts(result.productIds);
+      return result.ingredient;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
         throw new Error('IngredientNotFoundException');

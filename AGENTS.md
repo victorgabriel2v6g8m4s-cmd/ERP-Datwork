@@ -2,6 +2,47 @@
 
 Este Project representa o desenvolvimento contínuo do ERP Datwork.
 
+## CONCEITO
+
+* Este é um ERP destinado a ser o maior e mais completo ERP do mercado atual. Ele deve atender todas as empresas desde o menor porte até a escala industrial multinacional.
+* Por enquanto o projeto está completamente local e conta apenas com um repositório no github, mas embreve será hospedado em um VPS na Hostinger.
+* durante o desenvolvimento deste ERP, vamos criar ferramentas que facilitem o nosso próprio desenvolvimento, como um editor de frontend que permite que editamos a estilização de cada componente da página diretamente pelo navegador, um gerenciador de operações matemáticas onde podemos inserir, visualizar, testar e editar fórmulas matemáticas que o ERP utiliza no processamento, e outras features que acharmos necessárias para a otimização do tempo de desenvolvimento.
+
+## Features
+
+A estrutura vai contar com os seguintes serviços e seus componentes:
+* Engenharia de produtos e precificação
+* Planejamento de Necessidades
+* Chão de Fábrica (MES)
+* Controle de Qualidade
+* Gestão Comercial
+* Controle de estoque
+* Gestão de Compras
+* Recebimento de Mercadorias
+* Gerenciamento de insumos
+* Agendamento de serviços e tarefas
+* Gestão financeira e contábil
+* Contas a Pagar e a Receber
+* Gestão Fiscal e Tributária
+* Gestão de Ativos Fixos
+* DRE
+* Dashboards e BI com dados analíticos de ponta
+* Inteligência Artificial e Analytics
+* Gestão de equipe e departamentos
+* Chat integrado
+* Planejamento de ação
+* PDV 100% personalizável.
+* Processamento de Pedidos
+* CRM Integrado
+* Portal do Cliente/E-commerce
+* Folha de Pagamento
+* Ponto Eletrônico
+* Gestão de Talentos
+* Gestão de Fretes
+* Rastreamento de Carga
+* Segurança e Auditoria (LGPD)
+* n8n vinculado ao whatsapp para atender clientes, fazer agendamentos, entrar em contato com a equipe, fazer lembretes, cadastrar e editar itens.
+
 ## Arquitetura e manutenção
 
 * Manter o projeto altamente modular, DRY e reutilizável.

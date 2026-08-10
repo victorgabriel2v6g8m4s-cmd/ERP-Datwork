@@ -1,92 +1,65 @@
 import prismaClient from '../../../config/prisma.js';
-import { PricingEngine } from '../../../math/PricingEngine.js';
+import type { RecipeResponse, UpdateRecipeInput } from '../../../contracts/recipe/RecipeContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-
-interface IngredientInput {
-    ingredientId: string;
-    quantityNeeded: number;
-}
-
-interface UpdateRecipeRequest {
-    id: string;
-    unitsPerBatch: number;
-    ingredients: IngredientInput[];
-}
+import { PricingEngine } from '../../../math/PricingEngine.js';
+import { presentRecipe, RECIPE_RESPONSE_INCLUDE } from '../../../presenters/recipe/RecipePresenter.js';
+import { calculateRecipeCostPerUnit } from '../utils/RecipeCost.js';
 
 export class UpdateRecipeService {
-    async execute({ id, unitsPerBatch, ingredients }: UpdateRecipeRequest) {
-        CustomLogger.info(`Iniciando gravação física de Edição na Receita ID: ${id}`);
+  async execute(data: UpdateRecipeInput): Promise<RecipeResponse> {
+    CustomLogger.info(`[Recipes] Updating recipe ${data.id}`);
 
-        const safeUnits = Math.max(1, Number(unitsPerBatch));
+    try {
+      const productId = await prismaClient.$transaction(async (tx) => {
+        const recipe = await tx.recipe.findUnique({
+          where: { id: data.id },
+          select: { productId: true }
+        });
+        if (!recipe) throw new Error('RecipeNotFoundException');
 
-        try {
-            // ✨ Toda a esteira de leitura e mutação isolada de forma atômica
-            return await prismaClient.$transaction(async (tx) => {
+        const recipeCostPerUnit = await calculateRecipeCostPerUnit(tx, data.ingredients, data.unitsPerBatch);
 
-                // 1. ✨ Busca e valida a receita dentro da transação (Segurança contra Race Conditions)
-                const recipe = await tx.recipe.findUnique({
-                    where: { id },
-                    select: { productId: true } // Buscamos apenas o productId para otimizar I/O
-                });
-                if (!recipe) throw new Error('RecipeNotFoundException');
+        await tx.recipe.update({
+          where: { id: data.id },
+          data: { unitsPerBatch: data.unitsPerBatch }
+        });
+        await tx.recipeItem.deleteMany({ where: { recipeId: data.id } });
+        await tx.recipeItem.createMany({
+          data: data.ingredients.map((item) => ({
+            recipeId: data.id,
+            ingredientId: item.ingredientId,
+            quantityNeeded: item.quantityNeeded
+          }))
+        });
+        await tx.product.update({
+          where: { id: recipe.productId },
+          data: { recipeCostPerUnit }
+        });
 
-                // 2. Atualiza a quantidade de porções do lote na tabela principal de receitas
-                await tx.recipe.update({
-                    where: { id },
-                    data: { unitsPerBatch: safeUnits }
-                });
+        return recipe.productId;
+      });
 
-                // 3. Remove as associações antigas de insumos desta receita
-                await tx.recipeItem.deleteMany({ where: { recipeId: id } });
+      CustomLogger.info('[Recipes] Recipe committed; recalculating dependent product pricing');
+      await PricingEngine.recalculateProducts([productId]);
 
-                let calculatedRecipeCostPerUnit = 0;
+      const recipe = await prismaClient.recipe.findUnique({
+        where: { id: data.id },
+        include: RECIPE_RESPONSE_INCLUDE
+      });
+      if (!recipe) throw new Error('RecipeNotFoundException');
 
-                // 4. Se houver novos insumos, processa e calcula os novos custos agregados
-                if (ingredients && ingredients.length > 0) {
-                    const dbIngredients = await tx.ingredient.findMany({
-                        where: { id: { in: ingredients.map(i => i.ingredientId) } }
-                    });
+      return presentRecipe(recipe);
+    } catch (error) {
+      if (error instanceof Error && (
+        error.message === 'RecipeNotFoundException' ||
+        error.message === 'RecipeIngredientNotFoundException'
+      )) {
+        CustomLogger.warn(`[Recipes] Update rejected for ${data.id}: ${error.message}`);
+        throw error;
+      }
 
-                    // Mapeamento funcional limpo para inserção em bloco
-                    const recipeItemsData = ingredients.map(item => ({
-                        recipeId: id,
-                        ingredientId: item.ingredientId,
-                        quantityNeeded: item.quantityNeeded
-                    }));
-
-                    // ✨ Acumulador matemático puro usando reduce (Sem efeitos colaterais)
-                    const totalIngredientsCost = ingredients.reduce((sum, item) => {
-                        const ingBase = dbIngredients.find(db => db.id === item.ingredientId);
-                        const basePrice = ingBase ? ingBase.price : 0;
-                        const baseVolume = ingBase ? ingBase.quantity : 1;
-                        return sum + ((basePrice / baseVolume) * item.quantityNeeded);
-                    }, 0);
-
-                    calculatedRecipeCostPerUnit = totalIngredientsCost / safeUnits;
-
-                    // Insere a nova composição em lote
-                    await tx.recipeItem.createMany({ data: recipeItemsData });
-                }
-
-                CustomLogger.info(`Sincronizando custo recalculado de R$ ${calculatedRecipeCostPerUnit} no produto associado`);
-
-                // 5. Sincroniza o custo final fracionado na tabela principal de produtos
-                await tx.product.update({
-                    where: { id: recipe.productId },
-                    data: { recipeCostPerUnit: calculatedRecipeCostPerUnit }
-                });
-
-                CustomLogger.info('Executando recálculo síncrono através do motor PricingEngine');
-
-                // 🚀 Dispara a atualização global de lucros e margens do simulador
-                await PricingEngine.recalculateAll();
-
-                CustomLogger.info(`Edição da receita ${id} finalizada com sucesso absoluto`);
-                return { id, productId: recipe.productId };
-            });
-        } catch (error) {
-            CustomLogger.error(`Falha crítica ao atualizar a receita ID ${id}`, error);
-            throw error;
-        }
+      CustomLogger.error(`[Recipes] Failed to update recipe ${data.id}`, error);
+      throw error;
     }
+  }
 }

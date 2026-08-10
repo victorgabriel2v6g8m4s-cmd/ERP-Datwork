@@ -4,10 +4,16 @@ import type { Product } from '../../../types/product.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import { pricingService } from '../services/pricing.service.ts';
 import type {
+  PricingHeaderMetrics,
   PricingProductFieldUpdate,
   PricingProductMutationPayload,
   PricingSyncStatus
 } from '../types/pricing.types.ts';
+
+const EMPTY_METRICS: PricingHeaderMetrics = {
+  fixedCostPerUnitFactor: 0,
+  totalVariablePercent: 0
+};
 
 function applyLocalUpdate(product: Product, update: PricingProductFieldUpdate): Product {
   if (update.field === 'finalPrice') {
@@ -25,6 +31,7 @@ function toMutationPayload(update: PricingProductFieldUpdate): PricingProductMut
 
 export function usePricingProducts() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [metrics, setMetrics] = useState<PricingHeaderMetrics>(EMPTY_METRICS);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<PricingSyncStatus>('saved');
   const timeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -34,6 +41,10 @@ export function usePricingProducts() {
     try {
       const overview = await pricingService.getOverview();
       setProducts(overview.products);
+      setMetrics({
+        fixedCostPerUnitFactor: overview.fixedCostPerUnitFactor,
+        totalVariablePercent: overview.totalVariablePercent
+      });
     } catch (error) {
       CustomLogger.error('[Pricing] Failed to load products for pricing table', error);
     } finally {
@@ -84,5 +95,5 @@ export function usePricingProducts() {
     }, APP_CONFIG.pricing.interactions.productSaveDebounceMs);
   }, [load]);
 
-  return { products, loading, syncStatus, updateField, reload: load };
+  return { products, metrics, loading, syncStatus, updateField, reload: load };
 }

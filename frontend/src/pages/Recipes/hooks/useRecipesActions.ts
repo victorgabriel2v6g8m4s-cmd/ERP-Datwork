@@ -43,8 +43,8 @@ export function useRecipesActions() {
     CustomLogger.info('[Recipes] Creating recipe', { productId: payload.productId });
 
     try {
-      await recipesService.create(payload);
-      await fetchRecipes();
+      const created = await recipesService.create(payload);
+      setRecipes((current) => [...current, created].sort((a, b) => a.position - b.position));
       setIsCreateModalOpen(false);
       return true;
     } catch (error) {
@@ -52,14 +52,14 @@ export function useRecipesActions() {
       window.alert(TEXTS.recipes.errors.create(getApiErrorMessage(error, TEXTS.recipes.errors.createFallback)));
       return false;
     }
-  }, [fetchRecipes]);
+  }, []);
 
   const updateRecipe = useCallback(async (id: string, payload: RecipeMutationPayload) => {
     CustomLogger.info(`[Recipes] Updating recipe ${id}`);
 
     try {
-      await recipesService.update(id, payload);
-      await fetchRecipes();
+      const updated = await recipesService.update(id, payload);
+      setRecipes((current) => current.map((recipe) => recipe.id === id ? updated : recipe));
       setIsEditModalOpen(false);
       setSelectedRecipe(null);
       return true;
@@ -68,7 +68,7 @@ export function useRecipesActions() {
       window.alert(TEXTS.recipes.errors.update(getApiErrorMessage(error, TEXTS.recipes.errors.updateFallback)));
       return false;
     }
-  }, [fetchRecipes]);
+  }, []);
 
   const confirmStatusChange = useCallback(async () => {
     if (!statusRecipe) return;
@@ -81,13 +81,14 @@ export function useRecipesActions() {
     CustomLogger.info(`[Recipes] Updating recipe ${target.id} status to ${nextStatus}`);
 
     try {
-      await recipesService.updateStatus(target.id, nextStatus);
-      await fetchRecipes();
+      const updated = await recipesService.updateStatus(target.id, nextStatus);
+      setRecipes((current) => current.map((recipe) => recipe.id === updated.id ? updated : recipe));
     } catch (error) {
       CustomLogger.error(`[Recipes] Failed to update recipe ${target.id} status`, error);
-      await fetchRecipes();
+      setRecipes((current) => current.map((recipe) => recipe.id === target.id ? target : recipe));
+      window.alert(TEXTS.recipes.errors.status);
     }
-  }, [fetchRecipes, statusRecipe]);
+  }, [statusRecipe]);
 
   const handleDragEnd = useCallback(async (
     result: DropResult,
@@ -109,10 +110,14 @@ export function useRecipesActions() {
     setRecipes(updatedRecipes);
 
     try {
-      await recipesService.reorder(updatedRecipes.map((recipe) => ({ id: recipe.id, position: recipe.position })));
+      const persisted = await recipesService.reorder(
+        updatedRecipes.map((recipe) => ({ id: recipe.id, position: recipe.position }))
+      );
+      setRecipes(persisted);
       CustomLogger.info(`[Recipes] Reordered recipe ${result.source.index} -> ${destination.index}`);
     } catch (error) {
       CustomLogger.error('[Recipes] Failed to persist recipe order. Restoring server order', error);
+      window.alert(TEXTS.recipes.errors.reorder);
       await fetchRecipes();
     }
   }, [fetchRecipes, recipes]);

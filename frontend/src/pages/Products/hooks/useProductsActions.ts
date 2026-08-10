@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { TEXTS } from '../../../i18n/index.ts';
 import { type Product } from '../../../types/product.ts';
 import { useGridGestures } from '../../../hooks/useGridGestures.ts';
@@ -30,7 +30,7 @@ export function useProductsActions() {
     const [loading, setLoading] = useState(true);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    const fetchProducts = async () => {
+    const fetchProducts = useCallback(async () => {
         CustomLogger.info('[Products] Loading product catalog');
 
         try {
@@ -42,9 +42,9 @@ export function useProductsActions() {
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
-    const fetchOrderProfiles = async () => {
+    const fetchOrderProfiles = useCallback(async () => {
         CustomLogger.info('[Products] Loading custom order profiles');
 
         try {
@@ -54,7 +54,7 @@ export function useProductsActions() {
         } catch (error) {
             CustomLogger.error('[Products] Failed to load custom order profiles', error);
         }
-    };
+    }, []);
 
     const {
         activeItem: selectedProduct,

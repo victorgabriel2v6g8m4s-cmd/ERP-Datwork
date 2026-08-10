@@ -42,7 +42,7 @@ export class UpdateProductService {
             });
 
             CustomLogger.info(`Produto ${data.id} atualizado com sucesso. Disparando motor de precificação.`);
-            await PricingEngine.recalculateAll();
+            await PricingEngine.recalculateProducts([data.id]);
 
             const synchronizedProduct = await prismaClient.product.findUnique({
                 where: { id: data.id },

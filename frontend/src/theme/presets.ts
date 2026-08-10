@@ -2,6 +2,9 @@ import { AGENDA_THEME } from './agenda.ts';
 import { INGREDIENTS_THEME } from './ingredients.ts';
 
 export const ERP_THEME = {
+    app: {
+        routeLoading: 'min-h-screen flex items-center justify-center bg-slate-50 text-slate-500 font-bold animate-pulse'
+    },
     card: {
         base: 'flex items-center justify-between p-4 rounded-2xl shadow-sm border transition-all select-none touch-pan-y',
         white: 'border-slate-100 bg-white text-slate-800 hover:shadow-md',

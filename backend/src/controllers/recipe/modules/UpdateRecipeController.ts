@@ -1,46 +1,31 @@
-import { type Request, type Response } from 'express';
-// 🌟 Acoplamento direto com a instância centralizadora de serviços do módulo de receitas
-import { recipeService } from '../../../services/recipe/RecipeServiceHandler.js';
+import type { Request, Response } from 'express';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
+import { recipeService } from '../../../services/recipe/RecipeServiceHandler.js';
+import { parseRecipeUpdate, RecipeRequestValidationError } from '../utils/RecipeRequestValidator.js';
 
 export class UpdateRecipeController {
-    async handle(req: Request, res: Response): Promise<Response> {
-        const { id } = req.params;
-        const { unitsPerBatch, ingredients } = req.body;
+  async handle(req: Request, res: Response): Promise<Response> {
+    try {
+      const payload = parseRecipeUpdate(req.params.id, req.body as unknown);
+      const recipe = await recipeService.update.execute(payload);
+      return res.status(200).json(recipe);
+    } catch (error) {
+      if (error instanceof RecipeRequestValidationError) {
+        CustomLogger.warn(`[Recipes] Update rejected for field ${error.field}: ${error.message}`);
+        return res.status(400).json({ error: error.message });
+      }
+      if (error instanceof Error && error.message === 'RecipeNotFoundException') {
+        return res.status(404).json({ error: 'A ficha técnica solicitada não foi encontrada.' });
+      }
+      if (error instanceof Error && (
+        error.message === 'RecipeIngredientNotFoundException' ||
+        error.message === 'InvalidRecipeIngredientCostBasisException'
+      )) {
+        return res.status(400).json({ error: 'Um ou mais insumos da receita são inválidos.' });
+      }
 
-        CustomLogger.info(`Recebendo requisição HTTP para atualização da ficha técnica ID: ${id}`);
-
-        // Validação estrita na camada HTTP para o Narrowing do TypeScript
-        if (!id || typeof id !== 'string') {
-            CustomLogger.warn('Requisição de atualização rejeitada: parâmetro ID inválido ou ausente');
-            return res.status(400).json({ error: 'O parâmetro ID da receita é obrigatório e deve ser um texto válido.' });
-        }
-
-        if (unitsPerBatch === undefined || isNaN(Number(unitsPerBatch)) || !ingredients) {
-            CustomLogger.warn(`Tentativa de atualização da receita ${id} com parâmetros estruturais ausentes ou inválidos`);
-            return res.status(400).json({ error: 'Os campos de rendimento por lote (unitsPerBatch) e a lista de insumos são obrigatórios.' });
-        }
-
-        try {
-            // 🛠️ Monta o payload dinamicamente limpando tipos incorretos e respeitando exactOptionalPropertyTypes
-            const payload = {
-                id,
-                unitsPerBatch: Number(unitsPerBatch),
-                ingredients: Array.isArray(ingredients) ? ingredients : []
-            };
-
-            // ✨ Otimização: Consome diretamente a instância unificada, sem o "new" manual
-            const recipe = await recipeService.update.execute(payload);
-
-            return res.status(200).json(recipe);
-        } catch (error: any) {
-            if (error.message === 'RecipeNotFoundException') {
-                CustomLogger.warn(`Atualização abortada na camada HTTP: Ficha técnica ID ${id} não existe`);
-                return res.status(404).json({ error: 'A ficha técnica solicitada não foi encontrada no sistema.' });
-            }
-
-            CustomLogger.error(`Erro crítico não tratado ao atualizar a receita ID ${id}`, error);
-            return res.status(500).json({ error: 'Erro interno do servidor ao editar a receita.' });
-        }
+      CustomLogger.error('[Recipes] Failed to update recipe', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
+  }
 }

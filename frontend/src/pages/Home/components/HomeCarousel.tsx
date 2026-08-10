@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Zap, type LucideIcon } from 'lucide-react';
 
@@ -36,23 +36,24 @@ export function HomeCarousel({ items, onNavigate }: HomeCarouselProps) {
     const [direction, setDirection] = useState(1); // 1 = Avançar (Direita), -1 = Voltar (Esquerda)
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    // 🤖 ROTAÇÃO AUTOMATIZADA BLINDADA: Monitora o slide atual de forma limpa
-    useEffect(() => {
-        startTimer();
-        return () => stopTimer();
-    }, [currentSlide, items.length]);
+    const stopTimer = useCallback(() => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+    }, []);
 
-    const startTimer = () => {
+    const startTimer = useCallback(() => {
         stopTimer();
+        if (items.length === 0) return;
         timerRef.current = setInterval(() => {
             setDirection(1); // O avanço automático sempre move para a direita
             setCurrentSlide((prev) => (prev + 1) % items.length);
         }, 4500); // Mantém a pausa confortável de 4.5 segundos
-    };
+    }, [items.length, stopTimer]);
 
-    const stopTimer = () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-    };
+    useEffect(() => {
+        startTimer();
+        return stopTimer;
+    }, [currentSlide, startTimer, stopTimer]);
 
     const handleNextSlide = (e: React.MouseEvent) => {
         e.stopPropagation(); // Evita disparar o clique de navegação do card ao tocar na seta

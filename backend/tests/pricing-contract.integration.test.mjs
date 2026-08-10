@@ -1,25 +1,19 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { createMigratedTestDatabase } from './helpers/create-test-database.mjs';
 
-const backendRoot = fileURLToPath(new URL('../', import.meta.url));
 const databasePath = fileURLToPath(new URL('../pricing-contract-integration.db', import.meta.url));
 const databaseUrl = 'file:./pricing-contract-integration.db';
-const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 process.env.DATABASE_URL = databaseUrl;
-
-execFileSync(npxCommand, ['prisma', 'migrate', 'deploy'], {
-  cwd: backendRoot,
-  env: { ...process.env, DATABASE_URL: databaseUrl },
-  stdio: 'pipe'
-});
+await createMigratedTestDatabase(databasePath);
 
 const { ListPricingProductsService } = await import('../dist/services/finance/modules/ListPricingProductsService.js');
 const { PricingSettingsService } = await import('../dist/services/finance/modules/PricingSettingsService.js');
 const { UpdateProductPricingService } = await import('../dist/services/finance/modules/UpdateProductPricingService.js');
+const { UpdateIngredientService } = await import('../dist/services/ingredient/modules/UpdateIngredientService.js');
 const { default: prismaClient } = await import('../dist/config/prisma.js');
 
 after(async () => {
@@ -72,12 +66,39 @@ test('pricing services expose validated settings, overview and post-recalculatio
   assert.equal(settings.maxProductionCap, 100);
   assert.equal(typeof settings.updatedAt, 'string');
 
+  await new UpdateIngredientService().execute(ingredient.id, {
+    sku: ingredient.sku,
+    name: ingredient.name,
+    price: 40,
+    quantity: 10,
+    unit: ingredient.unit,
+    thumbnail: null,
+    medias: []
+  });
+  const productAfterIngredientUpdate = await prismaClient.product.findUnique({ where: { id: product.id } });
+  assert.equal(productAfterIngredientUpdate?.recipeCostPerUnit, 2);
+
+  await prismaClient.product.update({
+    where: { id: product.id },
+    data: { suggestedPrice: -123 }
+  });
+
   const overview = await new ListPricingProductsService().execute();
   const listed = overview.products.find((item) => item.id === product.id);
   assert.ok(listed);
   assert.equal(listed.unitsPerBatch, 4);
   assert.equal(typeof overview.fixedCostPerUnitFactor, 'number');
   assert.equal(typeof overview.totalVariablePercent, 'number');
+  assert.equal(listed.suggestedPrice, -123, 'GET overview must not mutate persisted pricing');
+
+  const unrelatedProduct = await prismaClient.product.create({
+    data: {
+      sku: `PRICING-UNRELATED-${suffix}`,
+      name: 'Produto não relacionado',
+      position: 1,
+      suggestedPrice: 321
+    }
+  });
 
   const updated = await new UpdateProductPricingService().execute({
     id: product.id,
@@ -97,6 +118,10 @@ test('pricing services expose validated settings, overview and post-recalculatio
   assert.equal(persisted?.includeFixedCosts, 'NO');
   assert.equal(persisted?.predictedNetProfit, updated.predictedNetProfit);
 
+  const unrelatedPersisted = await prismaClient.product.findUnique({ where: { id: unrelatedProduct.id } });
+  assert.equal(unrelatedPersisted?.suggestedPrice, 321, 'targeted recalculation must preserve unrelated products');
+
+  await prismaClient.product.delete({ where: { id: unrelatedProduct.id } });
   await prismaClient.product.delete({ where: { id: product.id } });
   await prismaClient.ingredient.delete({ where: { id: ingredient.id } });
 });

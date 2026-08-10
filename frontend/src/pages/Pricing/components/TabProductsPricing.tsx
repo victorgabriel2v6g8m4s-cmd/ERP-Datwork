@@ -2,11 +2,14 @@ import { CloudCheck, CloudLightning, TriangleAlert } from 'lucide-react';
 import { TEXTS } from '../../../i18n/index.ts';
 import { ERP_THEME } from '../../../theme/presets.ts';
 import { UI_KEYS } from '../../../ui/keys.ts';
-import { usePricingProducts } from '../hooks/usePricingProducts.ts';
+import type { usePricingProducts } from '../hooks/usePricingProducts.ts';
 import { PricingProductsTable } from './PricingProductsTable.tsx';
 
-export function TabProductsPricing() {
-  const pricing = usePricingProducts();
+interface TabProductsPricingProps {
+  pricing: ReturnType<typeof usePricingProducts>;
+}
+
+export function TabProductsPricing({ pricing }: TabProductsPricingProps) {
 
   if (pricing.loading) {
     return <div className={ERP_THEME.pricing.products.loading}>{TEXTS.pricing.products.loading}</div>;

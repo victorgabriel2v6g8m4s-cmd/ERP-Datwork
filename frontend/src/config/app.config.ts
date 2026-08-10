@@ -1,16 +1,24 @@
 const BYTES_PER_MEGABYTE = 1024 * 1024;
 
 const configuredApiBaseUrl = import.meta.env?.VITE_API_BASE_URL?.trim();
+const defaultApiBaseUrl = import.meta.env?.PROD ? '/api' : 'http://localhost:3333';
 
 export const APP_CONFIG = {
   locale: 'pt-BR',
   api: {
-    baseUrl: configuredApiBaseUrl || 'http://localhost:3333',
+    baseUrl: configuredApiBaseUrl || defaultApiBaseUrl,
+    timeoutMs: 15_000,
     endpoints: {
+      utilities: {
+        cep: (cep: string) => `/cep/${encodeURIComponent(cep)}`
+      },
       uploads: {
         products: '/products/upload',
         ingredients: '/ingredients/upload',
         appointments: '/appointments/upload'
+      },
+      products: {
+        catalog: '/products'
       },
       ingredients: {
         catalog: '/ingredients',
@@ -20,6 +28,12 @@ export const APP_CONFIG = {
         versions: (id: string) => `/ingredients/${encodeURIComponent(id)}/versions`,
         orderProfiles: '/ingredients/orders',
         orderProfile: (id: string) => `/ingredients/orders/${encodeURIComponent(id)}`
+      },
+      recipes: {
+        catalog: '/recipes',
+        item: (id: string) => `/recipes/${encodeURIComponent(id)}`,
+        status: (id: string) => `/recipes/${encodeURIComponent(id)}/status`,
+        reorder: '/recipes/reorder'
       },
       pricing: {
         products: '/pricing/products',

@@ -2,7 +2,6 @@ import { ExpenseCategory, ProductStatus, ValueType } from '@prisma/client';
 import prismaClient from '../../../config/prisma.js';
 import type { PricingOverviewResponse } from '../../../contracts/finance/PricingContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
-import { PricingEngine } from '../../../math/PricingEngine.js';
 import { presentProduct } from '../../../presenters/product/ProductPresenter.js';
 import { PricingSettingsService } from './PricingSettingsService.js';
 
@@ -11,8 +10,6 @@ export class ListPricingProductsService {
 
   async execute(): Promise<PricingOverviewResponse> {
     CustomLogger.info('[Pricing] Loading pricing overview');
-    await PricingEngine.recalculateAll();
-
     const settings = await this.settingsService.get();
     const [fixedExpenses, variableExpenses, products] = await Promise.all([
       prismaClient.expense.findMany({

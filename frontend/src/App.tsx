@@ -1,55 +1,59 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { LoginPage } from './pages/Login/LoginPage.tsx';
-import { HomePage } from './pages/Home/HomePage.tsx';
-import { AgendaPage } from './pages/Agenda/AgendaPage.tsx';
-import { AgendaSettingsPage } from './pages/Agenda/AgendaSettingsPage.tsx';
-import { FAQPage } from './pages/FAQ/FAQPage.tsx';
-import { ProductsPage } from './pages/Products/ProductsPage.tsx';
-import { IngredientsPage } from './pages/Ingredients/IngredientsPage.tsx';
-import { RecipesPage } from './pages/Recipes/RecipesPage.tsx';
-import { ExpensesPage } from './pages/Expenses/ExpensesPage.tsx';
-import { PricingPage } from './pages/Pricing/PricingPage.tsx';
+import { lazy, Suspense } from 'react';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { TEXTS } from './i18n/index.ts';
+import { ERP_THEME } from './theme/presets.ts';
+import { UI_KEYS } from './ui/keys.ts';
+
+const LoginPage = lazy(() => import('./pages/Login/LoginPage.tsx').then((module) => ({ default: module.LoginPage })));
+const HomePage = lazy(() => import('./pages/Home/HomePage.tsx').then((module) => ({ default: module.HomePage })));
+const AgendaPage = lazy(() => import('./pages/Agenda/AgendaPage.tsx').then((module) => ({ default: module.AgendaPage })));
+const AgendaSettingsPage = lazy(() => import('./pages/Agenda/AgendaSettingsPage.tsx').then((module) => ({ default: module.AgendaSettingsPage })));
+const FAQPage = lazy(() => import('./pages/FAQ/FAQPage.tsx').then((module) => ({ default: module.FAQPage })));
+const ProductsPage = lazy(() => import('./pages/Products/ProductsPage.tsx').then((module) => ({ default: module.ProductsPage })));
+const IngredientsPage = lazy(() => import('./pages/Ingredients/IngredientsPage.tsx').then((module) => ({ default: module.IngredientsPage })));
+const RecipesPage = lazy(() => import('./pages/Recipes/RecipesPage.tsx').then((module) => ({ default: module.RecipesPage })));
+const ExpensesPage = lazy(() => import('./pages/Expenses/ExpensesPage.tsx').then((module) => ({ default: module.ExpensesPage })));
+const PricingPage = lazy(() => import('./pages/Pricing/PricingPage.tsx').then((module) => ({ default: module.PricingPage })));
 
 function PrivateRoute() {
-  // const token = localStorage.getItem('token'); // Ou o nome da chave que seu ERP usa para salvar o token
-
-  // // Se houver token, o Outlet libera a renderização das páginas filhas internas; senão, joga para o login
-  // return token ? <Outlet /> : <Navigate to="/login" replace />;
   return <Outlet />;
 }
 
+function RouteLoading() {
+  return (
+    <div className={ERP_THEME.app.routeLoading} data-ui-key={UI_KEYS.app.routeLoading}>
+      {TEXTS.common.status.loading}
+    </div>
+  );
+}
 
 export default function App() {
-  // type AppRoute = 'login' | 'home' | 'agenda' | 'dashboard' | 'dre' | 'estoque' | 'precificacao' | 'produtos' | 'insumos' | 'receitas' | 'despesas' | 'servicos';
-
   return (
     <BrowserRouter>
-      <Routes>
-        {/* 🔐 Rota da tela de Login */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/faq" element={<FAQPage />} />
+      <Suspense fallback={<RouteLoading />}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/faq" element={<FAQPage />} />
 
-        <Route element={<PrivateRoute />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/agenda" element={<AgendaPage />} />
-          <Route path="/agenda/settings" element={<AgendaSettingsPage />} />
-          <Route path="/dashboard" element={<div className="p-8 font-bold">Módulo Dashboard em construção...</div>} />
-          <Route path="/dre" element={<div className="p-8 font-bold">Módulo DRE em construção...</div>} />
-          <Route path="/estoque" element={<div className="p-8 font-bold">Módulo Estoque em construção...</div>} />
-          <Route path="/insumos" element={<IngredientsPage />} />
-          <Route path="/produtos" element={<ProductsPage />} />
-          <Route path="/receitas" element={<RecipesPage />} />
-          <Route path="/despesas/:subtab" element={<ExpensesPage />} />
-          {/* Redirecionamento preventivo caso o usuário digite apenas /despesas na barra */}
-          <Route path="/despesas" element={<Navigate to="/despesas/custos-fixos" replace />} />
-          <Route path="/precificacao/:subtab" element={<PricingPage />} />
-          {/* Redirecionamento de segurança para carregar a aba de Produtos por padrão */}
-          <Route path="/precificacao" element={<Navigate to="/precificacao/produtos" replace />} />
-        </Route>
+          <Route element={<PrivateRoute />}>
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/agenda/settings" element={<AgendaSettingsPage />} />
+            <Route path="/dashboard" element={<div className="p-8 font-bold">Módulo Dashboard em construção...</div>} />
+            <Route path="/dre" element={<div className="p-8 font-bold">Módulo DRE em construção...</div>} />
+            <Route path="/estoque" element={<div className="p-8 font-bold">Módulo Estoque em construção...</div>} />
+            <Route path="/insumos" element={<IngredientsPage />} />
+            <Route path="/produtos" element={<ProductsPage />} />
+            <Route path="/receitas" element={<RecipesPage />} />
+            <Route path="/despesas/:subtab" element={<ExpensesPage />} />
+            <Route path="/despesas" element={<Navigate to="/despesas/custos-fixos" replace />} />
+            <Route path="/precificacao/:subtab" element={<PricingPage />} />
+            <Route path="/precificacao" element={<Navigate to="/precificacao/produtos" replace />} />
+          </Route>
 
-
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

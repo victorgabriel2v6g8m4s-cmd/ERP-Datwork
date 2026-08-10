@@ -1,4 +1,7 @@
 export const UI_KEYS = {
+  app: {
+    routeLoading: 'app.route.loading'
+  },
   recipes: {
     page: 'recipes.page', headerTitle: 'recipes.header.title', headerSubtitle: 'recipes.header.subtitle', search: 'recipes.search',
     list: 'recipes.list', createAction: 'recipes.actions.create', card: 'recipes.card', cardStatus: 'recipes.card.status',
@@ -46,6 +49,7 @@ export const UI_KEYS = {
 } as const;
 
 export type UiKey =
+  | typeof UI_KEYS.app[keyof typeof UI_KEYS.app]
   | typeof UI_KEYS.recipes[keyof typeof UI_KEYS.recipes]
   | typeof UI_KEYS.ingredients[keyof typeof UI_KEYS.ingredients]
   | typeof UI_KEYS.pricing[keyof typeof UI_KEYS.pricing]

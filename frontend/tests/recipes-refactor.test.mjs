@@ -95,6 +95,7 @@ test('Recipes uses centralized text, style, config and stable UI keys', async ()
   const actions = await readFile(new URL('../src/pages/Recipes/hooks/useRecipesActions.ts', import.meta.url), 'utf8');
 
   assert.equal(APP_CONFIG.recipes.defaults.unitsPerBatch, 1);
+  assert.equal(APP_CONFIG.api.endpoints.recipes.item('recipe/a'), '/recipes/recipe%2Fa');
   assert.equal(TEXTS.recipes.page.title, 'Fichas Técnicas');
   assert.ok(ERP_THEME.recipes.page.createFab.length > 0);
   assert.equal(UI_KEYS.recipes.formSubmit, 'recipes.form.submit');
@@ -104,4 +105,16 @@ test('Recipes uses centralized text, style, config and stable UI keys', async ()
   assert.match(editor, /TEXTS\.recipes\.form/);
   assert.doesNotMatch(page, /from ['"]\.\.\/\.\.\/api\/client/);
   assert.doesNotMatch(actions, /api\.\w+\(/);
+});
+
+test('Recipe mutations consume canonical responses without normal-path catalog refetches', async () => {
+  const service = await readFile(new URL('../src/pages/Recipes/services/recipes.service.ts', import.meta.url), 'utf8');
+  const actions = await readFile(new URL('../src/pages/Recipes/hooks/useRecipesActions.ts', import.meta.url), 'utf8');
+
+  assert.match(service, /APP_CONFIG\.api\.endpoints\.recipes\.catalog/);
+  assert.match(service, /requireRecipe\(response\.data, 'create'\)/);
+  assert.match(service, /requireRecipeList\(response\.data\)/);
+  assert.match(actions, /const created = await recipesService\.create\(payload\)/);
+  assert.match(actions, /const updated = await recipesService\.update\(id, payload\)/);
+  assert.match(actions, /const persisted = await recipesService\.reorder/);
 });
