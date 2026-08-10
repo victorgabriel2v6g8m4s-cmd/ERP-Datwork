@@ -12,6 +12,7 @@ await createMigratedTestDatabase(databasePath);
 
 const { CreateProductService } = await import('../dist/services/product/modules/CreateProductService.js');
 const { UpdateProductService } = await import('../dist/services/product/modules/UpdateProductService.js');
+const { UpdateProductStatusService } = await import('../dist/services/product/modules/UpdateProductStatusService.js');
 const { default: prismaClient } = await import('../dist/config/prisma.js');
 
 const RESPONSE_KEYS = [
@@ -121,4 +122,29 @@ test('UpdateProductService returns post-PricingEngine metrics and recipe hydrati
     const persisted = await prismaClient.product.findUnique({ where: { id: created.id } });
     assert.equal(persisted?.totalUnitCost, updated.totalUnitCost);
     assert.equal(persisted?.predictedNetProfit, updated.predictedNetProfit);
+});
+
+test('UpdateProductStatusService persists its audit snapshot inside the status transaction', async () => {
+    const created = await new CreateProductService().execute({
+        sku: `CONTRACT-STATUS-${Date.now()}`,
+        name: 'Produto com auditoria de status'
+    });
+    await prismaClient.recipe.create({
+        data: { productId: created.id, position: 0, unitsPerBatch: 8 }
+    });
+
+    const updated = await new UpdateProductStatusService().execute(created.id, 'INACTIVE');
+    assert.equal(updated.status, 'INACTIVE');
+
+    const persisted = await prismaClient.product.findUnique({ where: { id: created.id } });
+    const version = await prismaClient.productVersion.findFirst({
+        where: { productId: created.id },
+        orderBy: { versionDate: 'desc' }
+    });
+
+    assert.equal(persisted?.status, 'INACTIVE');
+    assert.ok(version);
+    assert.equal(version.snapshotData.status, 'INACTIVE');
+    assert.equal(version.snapshotData.id, created.id);
+    assert.equal(version.snapshotData.unitsPerBatch, 8);
 });

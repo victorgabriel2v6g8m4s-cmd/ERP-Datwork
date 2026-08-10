@@ -66,3 +66,8 @@ export interface UpdateProductRequest {
     includeFixedCosts?: CostInclusion;
     finalPrice?: number;
 }
+
+export interface ProductPositionInput {
+    id: string;
+    position: number;
+}

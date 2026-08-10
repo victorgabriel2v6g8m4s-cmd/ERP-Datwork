@@ -6,6 +6,10 @@ import type {
 } from '../../../contracts/finance/PricingContract.js';
 import { CustomLogger } from '../../../logger/CustomLogger.js';
 import { PricingEngine } from '../../../math/PricingEngine.js';
+import {
+  GLOBAL_PRICING_SETTINGS_ID,
+  readPricingSettings
+} from '../utils/PricingSettingsReader.js';
 
 function presentSettings(settings: PricingSetting): PricingSettingsResponse {
   return {
@@ -21,17 +25,12 @@ function presentSettings(settings: PricingSetting): PricingSettingsResponse {
 
 export class PricingSettingsService {
   async get(): Promise<PricingSettingsResponse> {
-    let settings = await prismaClient.pricingSetting.findUnique({ where: { id: 'GLOBAL_CONFIG' } });
-    if (!settings) {
-      CustomLogger.info('[Pricing] Creating missing global pricing settings singleton');
-      settings = await prismaClient.pricingSetting.create({ data: { id: 'GLOBAL_CONFIG' } });
-    }
-    return presentSettings(settings);
+    return presentSettings(await readPricingSettings());
   }
 
   async update(payload: PricingSettingsMutationInput): Promise<PricingSettingsResponse> {
     const updateData: Prisma.PricingSettingUpdateInput = {};
-    const createData: Prisma.PricingSettingCreateInput = { id: 'GLOBAL_CONFIG' };
+    const createData: Prisma.PricingSettingCreateInput = { id: GLOBAL_PRICING_SETTINGS_ID };
 
     if (payload.maxProductionCap !== undefined) {
       updateData.maxProductionCap = payload.maxProductionCap;
@@ -55,7 +54,7 @@ export class PricingSettingsService {
     }
 
     const settings = await prismaClient.pricingSetting.upsert({
-      where: { id: 'GLOBAL_CONFIG' },
+      where: { id: GLOBAL_PRICING_SETTINGS_ID },
       create: createData,
       update: updateData
     });

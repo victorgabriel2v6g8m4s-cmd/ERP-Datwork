@@ -8,6 +8,7 @@ import { PricingEngine } from '../../../math/PricingEngine.js';
 import { presentExpenseList } from '../../../presenters/finance/ExpensePresenter.js';
 import { buildExpenseSnapshotData } from '../../../utils/expense/ExpenseSnapshot.js';
 import { calculateExpenseMetrics } from '../utils/ExpenseMetrics.js';
+import { readPricingSettings } from '../utils/PricingSettingsReader.js';
 
 export class SaveExpensesService {
   async execute(expenses: ExpenseMutationInput[]): Promise<ExpensesOverviewResponse> {
@@ -60,11 +61,7 @@ export class SaveExpensesService {
     CustomLogger.info('[Expenses] Ledger committed; recalculating dependent product pricing');
     await PricingEngine.recalculateAll();
 
-    const settings = await prismaClient.pricingSetting.upsert({
-      where: { id: 'GLOBAL_CONFIG' },
-      create: { id: 'GLOBAL_CONFIG' },
-      update: {}
-    });
+    const settings = await readPricingSettings();
 
     return {
       expenses: presentExpenseList(activeExpenses),

@@ -1,12 +1,11 @@
 import { AppointmentStatus } from '@prisma/client';
 import type {
-  AppointmentCascadeDirection,
   AppointmentCascadeInput,
   AppointmentFinancialItem,
   AppointmentMediaItem,
   AppointmentMutationInput,
+  AppointmentOrderInput,
   AppointmentSubStatus,
-  AppointmentTimeUnit,
   AppointmentUpdateInput
 } from '../../../contracts/appointment/AppointmentContract.js';
 import {
@@ -25,6 +24,10 @@ export class AppointmentRequestValidationError extends Error {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isAllowedValue<T extends string>(value: unknown, allowed: readonly T[]): value is T {
+  return typeof value === 'string' && allowed.some((entry) => entry === value);
 }
 
 function requiredText(value: unknown, field: string): string {
@@ -67,8 +70,8 @@ function parseSubStatus(value: unknown, required = false): AppointmentSubStatus 
     }
     return DEFAULT_APPOINTMENT_SUB_STATUS;
   }
-  if (typeof value === 'string' && APPOINTMENT_SUB_STATUSES.includes(value as AppointmentSubStatus)) {
-    return value as AppointmentSubStatus;
+  if (isAllowedValue(value, APPOINTMENT_SUB_STATUSES)) {
+    return value;
   }
   throw new AppointmentRequestValidationError('subStatus', 'O sub-status informado não pertence ao catálogo permitido.');
 }
@@ -173,6 +176,31 @@ export function parseAppointmentListStatus(value: unknown): AppointmentStatus | 
   return parseAppointmentStatus(value);
 }
 
+function parseNonNegativeInteger(value: unknown, field: string): number {
+  const parsed = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim()
+      ? Number(value)
+      : Number.NaN;
+
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new AppointmentRequestValidationError(field, `O campo ${field} deve ser um inteiro maior ou igual a zero.`);
+  }
+
+  return parsed;
+}
+
+export function parseAppointmentOrder(idValue: unknown, value: unknown): AppointmentOrderInput {
+  if (!isRecord(value)) {
+    throw new AppointmentRequestValidationError('body', 'O payload de ordenação deve ser um objeto válido.');
+  }
+
+  return {
+    id: parseAppointmentId(idValue),
+    newPosition: parseNonNegativeInteger(value.newPosition, 'newPosition')
+  };
+}
+
 export function parseAppointmentCascade(value: unknown): AppointmentCascadeInput {
   if (!isRecord(value)) {
     throw new AppointmentRequestValidationError('body', 'O payload de reagendamento deve ser um objeto válido.');
@@ -188,22 +216,19 @@ export function parseAppointmentCascade(value: unknown): AppointmentCascadeInput
   if (!Number.isFinite(offsetValue) || offsetValue <= 0) {
     throw new AppointmentRequestValidationError('offsetValue', 'O deslocamento deve ser maior que zero.');
   }
-  const newPosition = typeof value.newPosition === 'number' ? value.newPosition : Number(value.newPosition);
-  if (!Number.isInteger(newPosition) || newPosition < 0) {
-    throw new AppointmentRequestValidationError('newPosition', 'A nova posição deve ser um inteiro maior ou igual a zero.');
-  }
-  if (typeof value.unit !== 'string' || !APPOINTMENT_TIME_UNITS.includes(value.unit as AppointmentTimeUnit)) {
+  const newPosition = parseNonNegativeInteger(value.newPosition, 'newPosition');
+  if (!isAllowedValue(value.unit, APPOINTMENT_TIME_UNITS)) {
     throw new AppointmentRequestValidationError('unit', 'A unidade temporal é inválida.');
   }
-  if (typeof value.actionType !== 'string' || !APPOINTMENT_CASCADE_DIRECTIONS.includes(value.actionType as AppointmentCascadeDirection)) {
+  if (!isAllowedValue(value.actionType, APPOINTMENT_CASCADE_DIRECTIONS)) {
     throw new AppointmentRequestValidationError('actionType', 'A direção do reagendamento é inválida.');
   }
   return {
     appointmentIds: ids,
     offsetValue,
-    unit: value.unit as AppointmentTimeUnit,
+    unit: value.unit,
     newPosition,
     targetId: requiredText(value.targetId, 'targetId'),
-    actionType: value.actionType as AppointmentCascadeDirection
+    actionType: value.actionType
   };
 }

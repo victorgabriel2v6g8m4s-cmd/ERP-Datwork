@@ -102,3 +102,8 @@ export interface AppointmentCascadeInput {
   targetId: string;
   actionType: AppointmentCascadeDirection;
 }
+
+export interface AppointmentOrderInput {
+  id: string;
+  newPosition: number;
+}

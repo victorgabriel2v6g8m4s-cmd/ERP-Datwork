@@ -3,17 +3,14 @@ import type { ExpensesOverviewResponse } from '../../../contracts/finance/Expens
 import { CustomLogger } from '../../../logger/CustomLogger.js';
 import { presentExpenseList } from '../../../presenters/finance/ExpensePresenter.js';
 import { calculateExpenseMetrics } from '../utils/ExpenseMetrics.js';
+import { readPricingSettings } from '../utils/PricingSettingsReader.js';
 
 export class ListExpensesService {
   async execute(): Promise<ExpensesOverviewResponse> {
     CustomLogger.info('[Expenses] Loading active expense ledger');
 
     const [settings, expenses] = await Promise.all([
-      prismaClient.pricingSetting.upsert({
-        where: { id: 'GLOBAL_CONFIG' },
-        create: { id: 'GLOBAL_CONFIG' },
-        update: {}
-      }),
+      readPricingSettings(),
       prismaClient.expense.findMany({
         where: { status: 'ACTIVE' },
         orderBy: { position: 'asc' }

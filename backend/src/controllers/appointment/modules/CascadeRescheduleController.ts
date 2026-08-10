@@ -18,6 +18,9 @@ export class CascadeRescheduleController {
       if (error instanceof Error && error.message === 'AppointmentNotFoundException') {
         return res.status(404).json({ error: 'Um dos agendamentos da cascata não foi encontrado.' });
       }
+      if (error instanceof Error && error.message === 'AppointmentReorderMismatch') {
+        return res.status(400).json({ error: 'A posição informada não pertence à fila atual de agendamentos.' });
+      }
       CustomLogger.error('[Agenda] Cascade reschedule failed', error);
       return res.status(500).json({ error: 'Erro interno ao processar o reagendamento em cascata.' });
     }

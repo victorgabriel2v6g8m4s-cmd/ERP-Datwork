@@ -8,6 +8,7 @@ import {
 import prismaClient from '../config/prisma.js';
 import { SERVER_CONFIG } from '../config/serverConfig.js';
 import { CustomLogger } from '../logger/CustomLogger.js';
+import { readPricingSettings } from '../services/finance/utils/PricingSettingsReader.js';
 
 const FLOAT_TOLERANCE = 0.000_001;
 
@@ -52,11 +53,7 @@ export class PricingEngine {
     });
 
     try {
-      const settings = await prismaClient.pricingSetting.upsert({
-        where: { id: 'GLOBAL_CONFIG' },
-        update: {},
-        create: { id: 'GLOBAL_CONFIG' }
-      });
+      const settings = await readPricingSettings();
 
       const effectiveIds = settings.enableAutoABC ? undefined : requestedIds;
       const [fixedExpenses, variableExpenses, products] = await Promise.all([

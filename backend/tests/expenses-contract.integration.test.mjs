@@ -23,6 +23,12 @@ after(async () => {
 });
 
 test('expense services persist canonical overview and restore server-side snapshots', async () => {
+  assert.equal(await prismaClient.pricingSetting.count(), 0);
+  const emptyOverview = await new ListExpensesService().execute();
+  assert.equal(emptyOverview.expenses.length, 0);
+  assert.equal(emptyOverview.fixedCostPerUnitFactor, 0);
+  assert.equal(await prismaClient.pricingSetting.count(), 0, 'GET expenses must not persist pricing defaults');
+
   await prismaClient.pricingSetting.upsert({
     where: { id: 'GLOBAL_CONFIG' },
     create: { id: 'GLOBAL_CONFIG', maxProductionCap: 100 },

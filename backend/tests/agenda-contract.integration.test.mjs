@@ -13,6 +13,7 @@ await createMigratedTestDatabase(databasePath);
 const { CreateAppointmentService } = await import('../dist/services/appointment/modules/CreateAppointmentService.js');
 const { ListAppointmentsService } = await import('../dist/services/appointment/modules/ListAppointmentsService.js');
 const { CascadeRescheduleService } = await import('../dist/services/appointment/modules/CascadeRescheduleService.js');
+const { UpdateAppointmentOrderService } = await import('../dist/services/appointment/modules/UpdateAppointmentOrderService.js');
 const { parseAppointmentCreate } = await import('../dist/controllers/appointment/utils/AppointmentRequestValidator.js');
 const { default: prismaClient } = await import('../dist/config/prisma.js');
 
@@ -69,6 +70,22 @@ test('agenda services expose canonical JSON, normalize legacy status and shift d
   assert.equal(shifted.subStatus, 'REAGENDADO');
   assert.equal(movedTarget.subStatus, 'REAGENDADO');
   assert.deepEqual(cascaded.map((item) => item.position), [0, 1]);
+
+  const orderService = new UpdateAppointmentOrderService();
+  await orderService.execute({ id: target.id, newPosition: 0 });
+  const reordered = await new ListAppointmentsService().execute();
+  assert.deepEqual(reordered.map((item) => item.id), [target.id, affected.id]);
+  assert.deepEqual(reordered.map((item) => item.position), [0, 1]);
+  assert.equal(new Set(reordered.map((item) => item.position)).size, reordered.length);
+
+  await assert.rejects(
+    () => orderService.execute({ id: target.id, newPosition: 2 }),
+    /AppointmentReorderMismatch/
+  );
+  await assert.rejects(
+    () => orderService.execute({ id: target.id, newPosition: 0.5 }),
+    /AppointmentReorderMismatch/
+  );
 
   await prismaClient.appointment.deleteMany({ where: { id: { in: [target.id, affected.id] } } });
 });

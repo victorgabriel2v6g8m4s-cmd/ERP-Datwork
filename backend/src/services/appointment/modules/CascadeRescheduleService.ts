@@ -52,8 +52,8 @@ export class CascadeRescheduleService {
 
         const [target] = ordered.splice(targetIndex, 1);
         if (!target) throw new Error('AppointmentNotFoundException');
-        const destination = Math.min(payload.newPosition, ordered.length);
-        ordered.splice(destination, 0, target);
+        if (payload.newPosition > ordered.length) throw new Error('AppointmentReorderMismatch');
+        ordered.splice(payload.newPosition, 0, target);
 
         await Promise.all(ordered.map((appointment, position) => (
           appointment.position === position

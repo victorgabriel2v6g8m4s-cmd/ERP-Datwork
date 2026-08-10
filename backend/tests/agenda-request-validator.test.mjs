@@ -5,7 +5,8 @@ const {
   AppointmentRequestValidationError,
   parseAppointmentCreate,
   parseAppointmentSubStatus,
-  parseAppointmentCascade
+  parseAppointmentCascade,
+  parseAppointmentOrder
 } = await import('../dist/controllers/appointment/utils/AppointmentRequestValidator.js');
 
 function validCreate(overrides = {}) {
@@ -51,4 +52,16 @@ test('appointment cascade validator rejects duplicates and unsafe position value
   });
   assert.equal(parsed.unit, 'HOURS');
   assert.equal(parsed.actionType, 'ANTERIOR');
+});
+
+test('appointment reorder validator requires a valid ID and a non-negative integer position', () => {
+  assert.deepEqual(parseAppointmentOrder(' appointment-1 ', { newPosition: '2' }), {
+    id: 'appointment-1',
+    newPosition: 2
+  });
+
+  assert.throws(() => parseAppointmentOrder('', { newPosition: 0 }), AppointmentRequestValidationError);
+  assert.throws(() => parseAppointmentOrder('appointment-1', { newPosition: -1 }), AppointmentRequestValidationError);
+  assert.throws(() => parseAppointmentOrder('appointment-1', { newPosition: 1.5 }), AppointmentRequestValidationError);
+  assert.throws(() => parseAppointmentOrder('appointment-1', {}), AppointmentRequestValidationError);
 });

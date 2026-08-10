@@ -55,6 +55,16 @@ test('pricing services expose validated settings, overview and post-recalculatio
   });
 
   const settingsService = new PricingSettingsService();
+  assert.equal(await prismaClient.pricingSetting.count(), 0);
+
+  const defaultSettings = await settingsService.get();
+  assert.equal(defaultSettings.maxProductionCap, 1000);
+  assert.equal(defaultSettings.marginCategoryA, 50);
+  assert.equal(await prismaClient.pricingSetting.count(), 0, 'GET settings must not persist defaults');
+
+  await new ListPricingProductsService().execute();
+  assert.equal(await prismaClient.pricingSetting.count(), 0, 'GET pricing overview must remain read-only');
+
   const settings = await settingsService.update({
     maxProductionCap: 100,
     marginCategoryA: 45,
