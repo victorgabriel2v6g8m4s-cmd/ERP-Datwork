@@ -1,130 +1,91 @@
-# ERP-Datwork Development Rules
+# ERP Datwork — Regras de Desenvolvimento
 
-Este arquivo define as regras de engenharia para qualquer alteração realizada no ERP-Datwork.
+Este Project representa o desenvolvimento contínuo do ERP Datwork.
 
-## 1. Princípios obrigatórios
+## Arquitetura e manutenção
 
-- Manter o código modular, legível e com responsabilidades pequenas.
-- Aplicar DRY: antes de criar lógica nova, procurar componentes, hooks, services, utilitários e tipos reutilizáveis existentes.
-- Evitar arquivos grandes. Quando um arquivo acumular responsabilidades diferentes, separar por responsabilidade.
-- Cada domínio deve ter um ponto central de orquestração e módulos menores responsáveis pela execução do trabalho.
-- Não misturar refatoração ampla com correção ou feature não relacionada na mesma tarefa.
-- Preservar comportamento existente quando o objetivo da tarefa for apenas refatoração.
+* Manter o projeto altamente modular, DRY e reutilizável.
+* Evitar arquivos grandes e difíceis de entender.
+* Preferir criar arquivos adicionais pequenos e especializados a concentrar muitas responsabilidades em um único arquivo.
+* Cada responsabilidade deve possuir um ponto central/orquestrador, delegando detalhes para services, hooks, utils, contracts, presenters e componentes menores.
+* Antes de criar uma solução nova, verificar se já existe componente, hook, service, utilitário ou padrão reutilizável no projeto.
 
-## 2. Estrutura e responsabilidades
+## Frontend
 
-### Frontend
+Utilizar os padrões já estabelecidos:
 
-Preferir a separação:
+* `TEXTS` para textos e conteúdo visível ao usuário.
+* `APP_CONFIG` para valores operacionais e configuráveis.
+* `ERP_THEME` para tokens e estilos semânticos.
+* `UI_KEYS` + `data-ui-key` para identidade estável dos elementos da interface e preparação do futuro editor visual.
+* Services devem ser a fronteira HTTP dos módulos.
+* Componentes visuais e hooks de UI não devem importar `api/client` diretamente.
+* Respostas externas devem possuir contratos runtime quando apropriado.
+* Reutilizar componentes globais em vez de reimplementar comportamentos equivalentes.
 
-- `Page`: composição e orquestração da tela.
-- `components/`: apresentação e interação visual específica do domínio.
-- `hooks/`: estado e coordenação de comportamento React.
-- `services/`: comunicação HTTP e fronteiras externas.
-- `utils/`: funções puras e reutilizáveis.
-- `constants/`: configurações estáticas.
-- `types/`: contratos específicos do domínio quando não forem globais.
+## Backend
 
-Páginas e componentes visuais não devem acessar `api/client` diretamente quando existir ou couber uma camada de service.
+* Controllers devem permanecer finos.
+* Validação HTTP deve ocorrer em validators/contracts próprios.
+* Services devem concentrar regras de negócio.
+* Presenters devem definir contratos públicos explícitos.
+* Evitar `any`, casts inseguros e confiança direta em payloads recebidos.
+* Transações devem ser pequenas e determinísticas.
+* Operações externas ou recálculos pesados não devem permanecer dentro de transações quando não forem necessários para atomicidade.
 
-### Backend
+## Logging
 
-Preferir a separação:
+* Utilizar `CustomLogger`.
+* Criar logs suficientes para localizar rapidamente bugs e falhas.
+* Evitar `console.log`, `console.warn` e `console.error`.
+* Evitar logging excessivo dentro de loops ou caminhos executados para cada item.
 
-- routes: declaração e composição das rotas.
-- controllers: fronteira HTTP, validação inicial e tradução de resposta.
-- services: regras de negócio.
-- repositories/data access: acesso a persistência quando a complexidade justificar a separação.
-- math/utils: funções determinísticas e cálculos reutilizáveis.
+## Segurança
 
-Controllers não devem concentrar regras de negócio complexas.
+* Segurança é prioridade.
+* Validar dados recebidos pelo backend.
+* Não confiar no cliente para IDs, enums, números, snapshots ou regras de negócio.
+* Utilizar allowlists e contratos explícitos.
+* Evitar alterações que ampliem superfície de ataque sem necessidade.
 
-## 3. Reutilização
+## Performance
 
-- Componentes visuais reutilizáveis pertencem a `frontend/src/components`.
-- Hooks genéricos pertencem a `frontend/src/hooks`.
-- Não duplicar validações, parsing, formatação ou cálculos entre Create/Edit/View.
-- Extrair comportamento global somente quando houver uma abstração realmente reutilizável.
-- Evitar componentes artificiais que apenas movem poucas linhas sem criar uma responsabilidade clara.
+* Performance e velocidade do sistema são prioridade.
+* Evitar requisições HTTP redundantes.
+* Evitar refetch desnecessário após mutations quando a resposta canônica puder atualizar o estado.
+* Evitar processamento repetitivo por item em renders.
+* Considerar code splitting e lazy loading para páginas/módulos quando apropriado.
 
-## 4. Logging e diagnóstico
+## Banco de dados
 
-- Usar `CustomLogger` para fluxos relevantes, falhas e eventos úteis de diagnóstico.
-- Código refatorado não deve introduzir `console.log`, `console.warn` ou `console.error` diretamente fora da implementação do logger.
-- Logs novos devem ser técnicos, objetivos e sem emojis.
-- Nunca registrar senhas, tokens, segredos, dados de autenticação ou payloads sensíveis.
-- Erros devem incluir contexto suficiente para localizar domínio, operação e registro quando seguro.
+* Não criar migrations ou alterar schema sem necessidade real.
+* Toda migration deve ser validada do zero pelo CI.
+* Preservar dados existentes e compatibilidade sempre que possível.
 
-## 5. Segurança
+## Git
 
-- Tratar qualquer dado recebido de API, formulário, URL, upload ou armazenamento como não confiável.
-- Validar estruturas e tipos nas fronteiras do sistema.
-- Não armazenar segredos no repositório.
-- Evitar interpolação insegura, exposição de stack traces ao cliente e mensagens internas desnecessárias.
-- Uploads devem validar tipo, tamanho, nome, destino e autorização.
-- Autenticação e autorização devem ser verificadas no backend; proteção visual no frontend não substitui autorização.
-- Preferir soft-delete quando dados possuírem valor histórico ou financeiro.
-- Novas dependências devem ser justificadas e avaliadas antes da inclusão.
-- Dependências com install scripts devem ser explicitamente aprovadas via `allowScripts`; não desabilitar a política com permissões globais.
+* Trabalhar na branch de desenvolvimento atual, nunca diretamente em `main` sem autorização explícita.
+* Antes de publicar alterações, verificar HEAD e garantir fast-forward.
+* Commits devem representar mudanças coerentes.
+* Não abrir PR nem fazer merge em `main` sem autorização explícita.
 
-## 6. Performance
+## Qualidade
 
-- Evitar N+1 queries e requisições HTTP repetitivas.
-- Preferir operações em lote quando disponíveis.
-- Não recalcular dados caros durante renderização sem necessidade.
-- Utilizar memoização somente quando existir benefício mensurável ou risco real de recomputação.
-- Preservar atualização otimista somente quando houver rollback/refresh seguro em caso de falha.
-- Revisar índices do banco para consultas frequentes ou crescentes.
+Para cada módulo refatorado:
 
-## 7. Estilização do frontend
+* criar ou manter typecheck específico quando fizer sentido;
+* adicionar testes para bugs corrigidos e contratos importantes;
+* manter o TypeScript global verde;
+* validar frontend e backend;
+* revisar o diff antes de publicar;
+* não esconder warnings importantes simplesmente aumentando limites ou desativando regras.
 
-- Novos padrões visuais devem ser centralizáveis.
-- Evitar repetir grandes blocos de classes/valores visuais em vários módulos.
-- Preferir tokens de tema, presets e componentes base globais.
-- Cores, espaçamentos, radius, sombras, tipografia e estados devem convergir para uma camada central de tema/design system.
-- Não criar um componente global apenas para um caso específico de uma única tela.
+## Direção arquitetural futura
 
-## 8. TypeScript e contratos
+O ERP está sendo preparado para um editor visual no navegador.
 
-- Evitar `any`; usar `unknown` nas fronteiras e validar antes de converter.
-- Não enfraquecer unions com padrões como `'A' | 'B' | string` em código novo.
-- Payloads de Create/Update devem possuir tipos próprios quando forem estabilizados.
-- Parsing de JSON externo deve ser defensivo e não ocorrer diretamente dentro do JSX.
+A arquitetura deve permitir futuramente:
 
-## 9. Testes
+`elemento DOM → data-ui-key → texto/tema/configuração → override persistido`
 
-- Toda função pura de regra de negócio relevante deve receber testes unitários.
-- Correção de bug deve receber teste de regressão quando tecnicamente viável.
-- Mudanças de infraestrutura, contratos e fronteiras críticas devem possuir smoke/architecture tests quando úteis.
-- Testes não devem depender do banco local do desenvolvedor.
-- CI deve utilizar banco temporário e ambiente reproduzível.
-
-Comandos padrão:
-
-```bash
-cd frontend && npm ci && npm test && npm run typecheck && npm run build:bundle
-cd backend && npm ci && DATABASE_URL=file:./ci.db npx prisma migrate deploy && DATABASE_URL=file:./ci.db npx prisma generate && DATABASE_URL=file:./ci.db npm test
-```
-
-Durante a refatoração atual, o `typecheck` global do frontend ainda contém dívida legada e é informativo no CI. Testes e `build:bundle` são bloqueantes. O objetivo é tornar o `typecheck` bloqueante assim que a dívida existente for eliminada.
-
-## 10. Fluxo de trabalho
-
-- Trabalhar em branch de feature/fix/refactor; evitar desenvolvimento direto na `main`.
-- Antes de editar, entender o módulo e reutilizações existentes.
-- Manter cada tarefa com escopo único e revisável.
-- Após implementar: revisar diff, tipagem, logs, segurança, performance e regressões.
-- CI deve passar antes de merge.
-- Não ignorar falhas do CI sem entender a causa.
-
-## 11. Critério de conclusão
-
-Uma tarefa só é considerada concluída quando:
-
-1. o comportamento solicitado está implementado;
-2. a arquitetura continua modular e DRY;
-3. logs relevantes estão presentes;
-4. riscos de segurança e performance foram revisados;
-5. testes aplicáveis foram adicionados/atualizados;
-6. validações de CI aplicáveis ao escopo estão consistentes;
-7. não foram introduzidas mudanças não relacionadas ao escopo.
+Portanto, ao refatorar páginas, centralizar de forma semântica as superfícies visuais e configuráveis importantes, sem transformar cada pequena classe CSS em configuração global.
