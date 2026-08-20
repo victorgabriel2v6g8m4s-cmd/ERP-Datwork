@@ -12,7 +12,7 @@
     "typecheck:expenses": "tsc -p tsconfig.expenses.json",
     "typecheck:agenda": "tsc -p tsconfig.agenda.json",
     "typecheck:ingredients": "tsc -p tsconfig.ingredients.json",
-    "build:bundle": "vite build",
+    "build:bundle": "vite build && node src/pages/VisualEditor/checks/assertProductionBundle.mjs",
     "build": "npm run typecheck && npm run build:bundle",
     "lint": "oxlint",
     "test": "node --test tests/*.test.mjs",

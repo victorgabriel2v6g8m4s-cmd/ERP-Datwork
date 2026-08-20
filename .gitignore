@@ -7,3 +7,8 @@ dist/
 *.db
 *.db-journal
 backend/uploads/
+
+# Runtime local e artefatos do launcher Windows
+.runtime/
+tools/windows-launcher/bin/
+tools/windows-launcher/launcher.config.json

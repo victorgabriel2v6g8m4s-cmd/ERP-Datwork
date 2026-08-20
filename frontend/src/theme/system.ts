@@ -31,6 +31,20 @@ export const SYSTEM_THEME = {
     availableModule: 'cursor-pointer border-slate-200/60 bg-slate-50/40 hover:border-indigo-300 hover:bg-white',
     plannedModule: 'cursor-not-allowed border-slate-200 bg-slate-100/70 opacity-75'
   },
+  visualEditor: {
+    shell: 'min-h-screen bg-slate-950 text-slate-100',
+    header: 'sticky top-0 z-30 border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur-md',
+    workspace: 'grid min-h-[calc(100vh-73px)] grid-cols-1 gap-4 p-4 xl:grid-cols-[360px_minmax(0,1fr)]',
+    panel: 'rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-xl',
+    label: 'mb-1.5 block text-xs font-bold text-slate-300',
+    input: 'min-h-11 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-white focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-400/25',
+    button: 'inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-700 bg-slate-800 px-3 text-xs font-bold text-slate-100 transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-40',
+    primaryButton: 'inline-flex min-h-11 items-center justify-center rounded-xl bg-indigo-600 px-3 text-xs font-bold text-white transition-colors hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:cursor-not-allowed disabled:opacity-40',
+    tab: 'min-h-11 rounded-xl px-3 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-400',
+    previewFrame: 'h-[calc(100vh-190px)] min-h-[520px] w-full rounded-xl border-0 bg-white',
+    status: 'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold',
+    warning: 'rounded-xl border border-amber-400/30 bg-amber-300/10 p-3 text-xs font-bold leading-relaxed text-amber-100'
+  },
   catalog: {
     shell: 'min-h-screen w-full bg-slate-50/50 pb-24 font-sans selection:bg-indigo-500/10',
     main: 'mx-auto mt-6 w-full space-y-4 px-4 sm:px-6',

@@ -16,6 +16,12 @@ const IngredientsPage = lazy(() => import('./pages/Ingredients/IngredientsPage.t
 const RecipesPage = lazy(() => import('./pages/Recipes/RecipesPage.tsx').then((module) => ({ default: module.RecipesPage })));
 const ExpensesPage = lazy(() => import('./pages/Expenses/ExpensesPage.tsx').then((module) => ({ default: module.ExpensesPage })));
 const PricingPage = lazy(() => import('./pages/Pricing/PricingPage.tsx').then((module) => ({ default: module.PricingPage })));
+const VisualEditorPage = import.meta.env.DEV
+  ? lazy(() => import('./pages/VisualEditor/VisualEditorPage.tsx').then((module) => ({ default: module.VisualEditorPage })))
+  : null;
+const VisualEditorBridge = import.meta.env.DEV
+  ? lazy(() => import('./pages/VisualEditor/preview/VisualEditorBridge.tsx').then((module) => ({ default: module.VisualEditorBridge })))
+  : null;
 
 function RouteLoading() {
   return (
@@ -31,10 +37,15 @@ function PageRoutes() {
   return (
     <PageErrorBoundary key={location.key}>
       <Suspense fallback={<RouteLoading />}>
+        {VisualEditorBridge ? <VisualEditorBridge /> : null}
         <Routes>
           <Route path={ROUTE_PATHS.login} element={<LoginPage />} />
           <Route path={ROUTE_PATHS.faq} element={<FAQPage />} />
           <Route path={ROUTE_PATHS.home} element={<HomePage />} />
+          <Route
+            path={ROUTE_PATHS.visualEditor}
+            element={VisualEditorPage ? <VisualEditorPage /> : <Navigate to={ROUTE_PATHS.home} replace />}
+          />
           <Route path={ROUTE_PATHS.agenda} element={<AgendaPage />} />
           <Route path={ROUTE_PATHS.agendaSettings} element={<AgendaSettingsPage />} />
           <Route path={ROUTE_PATHS.dashboard} element={<ModuleUnavailableState moduleId="dashboard" />} />

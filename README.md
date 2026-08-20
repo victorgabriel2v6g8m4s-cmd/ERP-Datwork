@@ -10,6 +10,7 @@ ERP em desenvolvimento, atualmente local, sendo preparado para uma arquitetura S
 - **Parcial/simulado**: login e proteção de rotas; autenticação produtiva ainda não existe.
 - **Legado local**: SQLite e campos financeiros `Float`.
 - **Proposto**: SaaS multiempresa, PostgreSQL/Decimal, RBAC/RLS, outbox/workers, PDV, estoque, compras, fiscal, CRM e demais domínios.
+- **Parcial/local**: Estúdio Visual DEV com overrides tipados e laboratório sandbox não publicável; inicializador Windows com bandeja, saúde loopback e atalhos reversíveis. Consulte o [mapa do Estúdio Visual](./docs/architecture/visual-editor.md) e o [runbook do launcher](./docs/operations/windows-launcher.md).
 
 ## Estrutura
 
@@ -44,6 +45,8 @@ npm run dev
 ```
 
 O launcher publica apenas em loopback: frontend em `http://127.0.0.1:5173` e backend em `http://127.0.0.1:3333`. Ele encerra os dois processos ao receber `Ctrl+C` e habilita o bypass de autenticação somente para esse ambiente local. O backend falha imediatamente se o bypass for combinado com produção ou host não local.
+
+O launcher Windows é uma ferramenta de desenvolvimento local, não um deploy para VPS, serviço Windows ou readiness produtivo. A instalação de Startup/Desktop é explícita e reversível; veja o [runbook](./docs/operations/windows-launcher.md).
 
 Os gates agregados também ficam na raiz: `npm run check`, `npm test` e `npm run build`. O projeto não usa npm workspaces e preserva os locks independentes de frontend e backend.
 

@@ -6,6 +6,20 @@ export const UI_KEYS = {
     routeErrorDescription: 'app.route.error.description',
     routeErrorRetry: 'app.route.error.retry'
   },
+  home: {
+    page: 'home.page',
+    search: 'home.search',
+    visualEditorAction: 'home.actions.visualEditor'
+  },
+  visualEditor: {
+    page: 'visualEditor.page',
+    header: 'visualEditor.header',
+    controls: 'visualEditor.controls',
+    propertyEditor: 'visualEditor.propertyEditor',
+    preview: 'visualEditor.preview',
+    laboratory: 'visualEditor.laboratory',
+    status: 'visualEditor.status'
+  },
   recipes: {
     page: 'recipes.page', headerTitle: 'recipes.header.title', headerSubtitle: 'recipes.header.subtitle', search: 'recipes.search',
     list: 'recipes.list', createAction: 'recipes.actions.create', card: 'recipes.card', cardStatus: 'recipes.card.status',
@@ -54,6 +68,8 @@ export const UI_KEYS = {
 
 export type UiKey =
   | typeof UI_KEYS.app[keyof typeof UI_KEYS.app]
+  | typeof UI_KEYS.home[keyof typeof UI_KEYS.home]
+  | typeof UI_KEYS.visualEditor[keyof typeof UI_KEYS.visualEditor]
   | typeof UI_KEYS.recipes[keyof typeof UI_KEYS.recipes]
   | typeof UI_KEYS.ingredients[keyof typeof UI_KEYS.ingredients]
   | typeof UI_KEYS.pricing[keyof typeof UI_KEYS.pricing]

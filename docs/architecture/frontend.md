@@ -45,7 +45,7 @@ flowchart LR
 
 ## Design system e editor visual
 
-Tokens globais definem cor, tipografia, espaço, tamanho de toque, foco e breakpoints. Tema semântico define variantes por componente. `data-ui-key` mapeia elemento → chave → token/texto/configuração → override tenant-aware futuro. Override não poderá injetar CSS/HTML arbitrário; deverá usar schema/allowlist, versionamento, preview, auditoria e rollback.
+Tokens globais definem cor, tipografia, espaço, tamanho de toque, foco e breakpoints. Tema semântico define variantes por componente. `data-ui-key` mapeia elemento → chave → token/texto/configuração → override tenant-aware futuro. O [Estúdio Visual](./visual-editor.md) está **Parcial**: em DEV local já aplica propriedades allowlisted, mantém drafts locais versionados e oferece laboratório sandbox não publicável. Override SaaS ainda não existe e permanece **Bloqueado/Proposto** até schema, autenticação, TenantContext, RBAC, auditoria, CSP produtiva e rollback.
 
 ## Responsividade
 

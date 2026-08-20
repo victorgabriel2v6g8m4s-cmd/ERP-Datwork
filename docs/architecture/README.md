@@ -12,8 +12,9 @@ Status: **arquitetura alvo proposta**; inventário do estado atual baseado no re
 | Login | **Parcial/simulado** | tela existe; backend fecha produção e permite bypass apenas em desenvolvimento |
 | SaaS multiempresa | **Proposto** | sem Organization/User/Membership/RBAC/RLS implementados |
 | Assíncrono/integrações | **Proposto** | sem outbox, fila/worker e webhook produtivo observados |
-| Operação | **Proposto** | sem VPS/TLS/readiness/backup externo/restore drill implementados |
-| UI system | **Parcial** | i18n pt-BR, config, theme, chaves de UI e componentes universais; padronização incompleta |
+| Operação SaaS | **Proposto** | sem VPS/TLS/readiness/backup externo/restore drill implementados |
+| Ferramentas locais | **Parcial** | Estúdio Visual DEV e launcher Windows local documentados; não são publicação/deploy produtivos |
+| UI system | **Parcial** | i18n pt-BR, config, theme, chaves de UI e componentes universais; Estúdio Visual allowlisted local |
 
 ## Alvo arquitetural
 
@@ -48,10 +49,12 @@ flowchart TB
 
 - [Contexto](./system-context.md) e [domínios](./domain-map.md)
 - [Frontend](./frontend.md), [backend](./backend.md) e [dados](./data.md)
+- [Estúdio Visual](./visual-editor.md)
 - [Contratos/eventos](./contracts-and-events.md) e [integrações](./integrations-and-webhooks.md)
 - [Tenancy/RBAC](./tenancy-and-rbac.md) e [auth/sessões](./authentication-and-sessions.md)
 - [Observabilidade](./observability.md), [VPS/recuperação](./vps-operations.md) e [migração](./postgresql-migration.md)
 - [UX responsiva](./ux-responsive.md) e [ADRs](./decisions/README.md)
+- [Launcher Windows](../operations/windows-launcher.md)
 
 ## Gates de produção
 

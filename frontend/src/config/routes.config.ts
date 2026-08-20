@@ -2,6 +2,7 @@ export const ROUTE_PATHS = {
   login: '/login',
   faq: '/faq',
   home: '/home',
+  visualEditor: '/__dev/visual-editor',
   agenda: '/agenda',
   agendaSettings: '/agenda/settings',
   dashboard: '/dashboard',
@@ -20,6 +21,7 @@ export const ROUTE_PATHS = {
 
 export const FEATURE_FLAGS = {
   realAuthentication: false,
+  visualEditor: Boolean(import.meta.env?.DEV),
   modules: {
     dashboard: false,
     dre: false,

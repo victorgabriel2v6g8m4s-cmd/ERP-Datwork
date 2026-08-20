@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "node tools/dev-stack.mjs",
+    "launcher:build": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/windows-launcher/build.ps1",
+    "launcher:smoke": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/windows-launcher/smoke.ps1",
+    "launcher:install": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/windows-launcher/install.ps1",
+    "launcher:uninstall": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/windows-launcher/uninstall.ps1",
     "policy:preflight": "node tools/policy-preflight.mjs",
     "check": "npm --prefix backend run build && npm --prefix frontend run lint && npm --prefix frontend run typecheck",
     "test:tools": "node --test tests/*.test.mjs",
