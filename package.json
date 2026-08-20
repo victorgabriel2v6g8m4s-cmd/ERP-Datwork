@@ -1,0 +1,14 @@
+{
+  "name": "erp-datwork",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/dev-stack.mjs",
+    "policy:preflight": "node tools/policy-preflight.mjs",
+    "check": "npm --prefix backend run build && npm --prefix frontend run lint && npm --prefix frontend run typecheck",
+    "test:tools": "node --test tests/*.test.mjs",
+    "test": "npm run test:tools && npm --prefix backend test && npm --prefix frontend test",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build"
+  }
+}

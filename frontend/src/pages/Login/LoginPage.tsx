@@ -1,83 +1,114 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, User, ArrowRight } from 'lucide-react';
+import { ArrowRight, Lock, ShieldAlert, User } from 'lucide-react';
+import { ROUTE_PATHS } from '../../config/routes.config.ts';
+import { SYSTEM_TEXTS } from '../../i18n/system.ts';
+import { SYSTEM_THEME } from '../../theme/system.ts';
 
 export function LoginPage() {
-  const navigate = useNavigate(); // 🧭 Gancho de navegação por URL real
+  const navigate = useNavigate();
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLoginSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError('');
 
-    // Validação de acesso simulada profissional
-    if (username.trim() && password.trim()) {
-      navigate('/home'); // Push na URL para a Homepage Central
-    } else {
-      setError('Por favor, preencha todos os campos obrigatórios.');
+    if (!username.trim() || !password.trim()) {
+      setError(SYSTEM_TEXTS.login.requiredFields);
+      (username.trim() ? passwordInputRef : usernameInputRef).current?.focus();
+      return;
     }
+
+    navigate(ROUTE_PATHS.home);
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 z-50 font-sans select-none">
+    <main className={SYSTEM_THEME.login.shell}>
       <motion.form
+        noValidate
         onSubmit={handleLoginSubmit}
         initial={{ y: 25, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 25, stiffness: 180 }}
-        className="w-full max-w-sm p-8 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl shadow-2xl space-y-5"
+        className={SYSTEM_THEME.login.form}
+        aria-describedby="development-access-notice"
       >
-        <div className="text-center space-y-1">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto text-white shadow-lg shadow-indigo-500/20">
-            <Lock className="w-5 h-5" />
+        <header className="space-y-1 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/20">
+            <Lock className="h-5 w-5" aria-hidden="true" />
           </div>
-          <h2 className="text-lg font-black text-white tracking-tight mt-3">Portal Agenda Mágica</h2>
-          <p className="text-xs text-slate-400 font-medium">Faça login para gerenciar seu ecossistema</p>
+          <h1 className="mt-3 text-lg font-black tracking-tight text-white">{SYSTEM_TEXTS.login.title}</h1>
+          <p className="text-xs font-medium text-slate-400">{SYSTEM_TEXTS.login.subtitle}</p>
+        </header>
+
+        <div id="development-access-notice" className={SYSTEM_THEME.login.notice} role="note">
+          <ShieldAlert className="mr-1 inline h-4 w-4" aria-hidden="true" />
+          {SYSTEM_TEXTS.login.demoNotice}
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-center text-xs text-red-400 font-semibold">
+          <div id="login-error" className={SYSTEM_THEME.login.error} role="alert">
             {error}
           </div>
         )}
 
-        <div className="space-y-3.5">
-          <div className="relative">
-            <User className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Usuário ou E-mail"
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium text-white placeholder-slate-500 transition-colors"
-            />
+        <div className="space-y-4">
+          <div>
+            <label className={SYSTEM_THEME.login.label} htmlFor="demo-username">
+              {SYSTEM_TEXTS.login.usernameLabel}
+            </label>
+            <div className="relative">
+              <User className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
+              <input
+                ref={usernameInputRef}
+                id="demo-username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                autoFocus
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder={SYSTEM_TEXTS.login.usernamePlaceholder}
+                aria-invalid={Boolean(error && !username.trim())}
+                aria-describedby={error ? 'login-error development-access-notice' : 'development-access-notice'}
+                className={SYSTEM_THEME.login.input}
+              />
+            </div>
           </div>
-          
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Senha de Acesso"
-              className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-indigo-500 text-sm font-medium text-white placeholder-slate-500 transition-colors"
-            />
+
+          <div>
+            <label className={SYSTEM_THEME.login.label} htmlFor="demo-password">
+              {SYSTEM_TEXTS.login.passwordLabel}
+            </label>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
+              <input
+                ref={passwordInputRef}
+                id="demo-password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={SYSTEM_TEXTS.login.passwordPlaceholder}
+                aria-invalid={Boolean(error && !password.trim())}
+                aria-describedby={error ? 'login-error development-access-notice' : 'development-access-notice'}
+                className={SYSTEM_THEME.login.input}
+              />
+            </div>
           </div>
         </div>
 
-        <button
-          type="submit"
-          className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/10 cursor-pointer flex items-center justify-center gap-1 hover:scale-[1.01] active:scale-[0.99]"
-        >
-          <span>Entrar no Sistema</span>
-          <ArrowRight className="w-4 h-4" />
+        <button type="submit" className={SYSTEM_THEME.login.submit}>
+          <span>{SYSTEM_TEXTS.login.submit}</span>
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </button>
       </motion.form>
-    </div>
+    </main>
   );
 }

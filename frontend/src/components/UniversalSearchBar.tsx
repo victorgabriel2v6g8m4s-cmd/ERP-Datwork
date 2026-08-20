@@ -59,8 +59,14 @@ export function UniversalSearchBar({
 
         {children && <div className="flex gap-2 w-full md:w-auto items-center flex-wrap shrink-0">{children}</div>}
 
-        <button type="button" onClick={() => setIsExpanded((current) => !current)} className={`px-3.5 rounded-xl border flex items-center justify-center gap-1.5 font-bold transition-all cursor-pointer shadow-3xs ${isExpanded ? 'bg-indigo-50 border-indigo-300 text-indigo-700 ring-2 ring-indigo-500/5' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-          <SlidersHorizontal className="w-4 h-4" />
+        <button
+          type="button"
+          onClick={() => setIsExpanded((current) => !current)}
+          aria-label={TEXTS.common.search.filters}
+          aria-expanded={isExpanded}
+          className={`min-h-11 min-w-11 px-3.5 rounded-xl border flex items-center justify-center gap-1.5 font-bold transition-all cursor-pointer shadow-3xs focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isExpanded ? 'bg-indigo-50 border-indigo-300 text-indigo-700 ring-2 ring-indigo-500/5' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+        >
+          <SlidersHorizontal className="w-4 h-4" aria-hidden="true" />
           <span className="hidden sm:inline">{TEXTS.common.search.filters}</span>
         </button>
       </div>

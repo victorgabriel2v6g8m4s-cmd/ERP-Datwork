@@ -17,6 +17,21 @@ function readCsv(value: string | undefined, fallback: string[]): string[] {
 
 const environment = process.env['NODE_ENV']?.trim() || 'development';
 const isProduction = environment === 'production';
+const host = process.env['HOST']?.trim() || '127.0.0.1';
+
+function isLoopbackHost(value: string): boolean {
+  const normalized = value.trim().toLowerCase().replace(/^\[|\]$/g, '');
+  return normalized === '127.0.0.1' || normalized === '::1' || normalized === 'localhost';
+}
+
+const allowInsecureDevelopmentBypass = readBoolean(
+  process.env['ALLOW_INSECURE_AUTH_BYPASS'],
+  !isProduction
+);
+
+if (allowInsecureDevelopmentBypass && (isProduction || !isLoopbackHost(host))) {
+  throw new Error('UnsafeAuthBypassConfiguration');
+}
 
 export const ALLOWED_UPLOAD_MIME_TYPES = [
   'image/jpeg',
@@ -33,6 +48,7 @@ export const SERVER_CONFIG = {
   runtime: {
     environment,
     isProduction,
+    host,
     port: readPositiveInteger(process.env['PORT'], 3333),
     trustProxy: readBoolean(process.env['TRUST_PROXY'], isProduction)
   },
@@ -49,10 +65,7 @@ export const SERVER_CONFIG = {
     }
   },
   auth: {
-    allowInsecureDevelopmentBypass: !isProduction && readBoolean(
-      process.env['ALLOW_INSECURE_AUTH_BYPASS'],
-      true
-    )
+    allowInsecureDevelopmentBypass
   },
   uploads: {
     maxSizeBytes: readPositiveInteger(process.env['UPLOAD_MAX_SIZE_MB'], 25) * BYTES_PER_MEGABYTE,

@@ -5,9 +5,11 @@ import { SERVER_CONFIG } from './config/serverConfig.js';
 import { CustomLogger } from './logger/CustomLogger.js';
 
 const app = createApp();
-const server = app.listen(SERVER_CONFIG.runtime.port, () => {
-  CustomLogger.info(`[Server] ERP Datwork listening on port ${SERVER_CONFIG.runtime.port}`, {
-    environment: SERVER_CONFIG.runtime.environment
+const server = app.listen(SERVER_CONFIG.runtime.port, SERVER_CONFIG.runtime.host, () => {
+  CustomLogger.info('[Server] ERP Datwork ready', {
+    environment: SERVER_CONFIG.runtime.environment,
+    host: SERVER_CONFIG.runtime.host,
+    port: SERVER_CONFIG.runtime.port
   });
 });
 

@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Zap, type LucideIcon } from 'lucide-react';
 interface CarouselItem {
     name: string;
     path: string;
-    desc: string;
+    description: string;
     icon: LucideIcon;
     bgGradient: string;
 }
@@ -13,6 +13,9 @@ interface CarouselItem {
 interface HomeCarouselProps {
     items: CarouselItem[];
     onNavigate: (path: string) => void;
+    sectionLabel: string;
+    previousLabel: string;
+    nextLabel: string;
 }
 
 // 📐 CONFIGURAÇÃO CINEMÁTICA ULTRA SUTIL: Deslocamento horizontal reduzido e suave
@@ -31,7 +34,7 @@ const slideVariants = {
     })
 };
 
-export function HomeCarousel({ items, onNavigate }: HomeCarouselProps) {
+export function HomeCarousel({ items, onNavigate, sectionLabel, previousLabel, nextLabel }: HomeCarouselProps) {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [direction, setDirection] = useState(1); // 1 = Avançar (Direita), -1 = Voltar (Esquerda)
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -80,7 +83,7 @@ export function HomeCarousel({ items, onNavigate }: HomeCarouselProps) {
             onMouseLeave={startTimer}
         >
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                <Zap className="w-3.5 h-3.5 border-indigo-900 fill-indigo-200" /> Destaques do Sistema
+                <Zap className="w-3.5 h-3.5 border-indigo-900 fill-indigo-200" aria-hidden="true" /> {sectionLabel}
             </span>
 
             {/* Contêiner Base Relativo */}
@@ -88,7 +91,8 @@ export function HomeCarousel({ items, onNavigate }: HomeCarouselProps) {
 
                 {/* AnimatePresence configurado em modo popLayout estável */}
                 <AnimatePresence initial={false} custom={direction} mode="popLayout">
-                    <motion.div
+                    <motion.button
+                        type="button"
                         key={`slide-active-${currentSlide}`} // A chave baseada estritamente no índice força a renderização perfeita
                         custom={direction}
                         variants={slideVariants}
@@ -100,36 +104,38 @@ export function HomeCarousel({ items, onNavigate }: HomeCarouselProps) {
                             opacity: { duration: 0.25 }
                         }}
                         onClick={() => onNavigate(activeSlide.path)}
-                        className={`absolute inset-0 bg-gradient-to-r ${activeSlide.bgGradient} px-12 py-4 flex items-center justify-between cursor-pointer w-full h-full`}
+                        className={`absolute inset-0 bg-gradient-to-r ${activeSlide.bgGradient} px-14 py-4 flex items-center justify-between cursor-pointer w-full h-full text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-300`}
                     >
                         <div className="space-y-1 text-left min-w-0 pr-6">
                             <h2 className="text-white text-sm font-black tracking-tight">{activeSlide.name}</h2>
-                            <p className="text-[11px] text-slate-400 font-bold leading-tight line-clamp-2">{activeSlide.desc}</p>
+                            <p className="text-[11px] text-slate-400 font-bold leading-tight line-clamp-2">{activeSlide.description}</p>
                         </div>
 
                         <div className="p-2 bg-white/10 text-white rounded-xl border border-white/10 shrink-0 shadow-sm flex items-center justify-center">
                             <SlideIcon className="w-4 h-4" />
                         </div>
-                    </motion.div>
+                    </motion.button>
                 </AnimatePresence>
 
                 {/* 🧭 SETAS DE CONTROLE MANUAIS CENTRALIZADAS E PROTEGIDAS */}
                 <button
                     type="button"
                     onClick={handlePrevSlide}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-black/30 hover:bg-black/50 text-white rounded-xl flex items-center justify-center cursor-pointer border border-white/5 backdrop-blur-md transition-colors"
-                    title="Slide Anterior (Voltar)"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-black/30 hover:bg-black/50 text-white rounded-xl flex items-center justify-center cursor-pointer border border-white/5 backdrop-blur-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    title={previousLabel}
+                    aria-label={previousLabel}
                 >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 </button>
 
                 <button
                     type="button"
                     onClick={handleNextSlide}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-black/30 hover:bg-black/50 text-white rounded-xl flex items-center justify-center cursor-pointer border border-white/5 backdrop-blur-md transition-colors"
-                    title="Próximo Slide (Avançar)"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-black/30 hover:bg-black/50 text-white rounded-xl flex items-center justify-center cursor-pointer border border-white/5 backdrop-blur-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                    title={nextLabel}
+                    aria-label={nextLabel}
                 >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
             </div>
         </div>

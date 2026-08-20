@@ -1,32 +1,39 @@
-# React + TypeScript + Vite
+# Frontend do ERP Datwork
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Status: **aplicação parcial em desenvolvimento local**.
 
-Currently, two official plugins are available:
+SPA em React, TypeScript e Vite. Antes de alterar, leia [`REGRAS.md`](../REGRAS.md), [`AGENTS.md`](../AGENTS.md) e [`frontend/AGENTS.md`](./AGENTS.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Módulos observados
 
-## React Compiler
+Agenda, produtos, insumos, receitas, despesas e precificação. Login ainda não representa autenticação produtiva; dashboard, DRE e estoque contêm placeholders.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Fluxo
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```text
+Page → components/hooks → feature service → api/client → backend
+            ↓
+TEXTS + APP_CONFIG + ERP_THEME + UI_KEYS
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Detalhes e direção alvo: [Arquitetura de frontend](../docs/architecture/frontend.md) e [UX responsiva](../docs/architecture/ux-responsive.md).
+
+## Desenvolvimento
+
+```bash
+npm install
+npm run dev
+```
+
+O backend local deve estar disponível na URL configurada por `VITE_API_BASE_URL`; na ausência, o desenvolvimento usa o default do projeto. Não versione `.env` ou credenciais.
+
+## Gates
+
+```bash
+npm test
+npm run typecheck
+npm run lint
+npm run build:bundle
+```
+
+Para mudança visual, valide também mobile e desktop, teclado, foco, contraste e estados de loading/vazio/erro/sucesso.

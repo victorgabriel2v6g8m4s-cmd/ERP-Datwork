@@ -1,5 +1,6 @@
 import { Landmark, Package, Percent, Sliders, Tags, Landmark as FixedIcon } from 'lucide-react';
 import { useParams } from 'react-router-dom';
+import { FEATURE_FLAGS, ROUTE_PATHS } from '../../config/routes.config.ts';
 import {
   GlobalFooterNav,
   GlobalTopTabs,
@@ -7,6 +8,7 @@ import {
   UniversalHeaderDashboard
 } from '../../components/index.ts';
 import { TEXTS } from '../../i18n/index.ts';
+import { SYSTEM_TEXTS } from '../../i18n/system.ts';
 import { ERP_THEME } from '../../theme/presets.ts';
 import { UI_KEYS } from '../../ui/keys.ts';
 import { formatCurrencyBRL } from '../../utils/format.ts';
@@ -27,9 +29,16 @@ export function PricingPage() {
   const pricing = usePricingProducts();
 
   const tabs = [
-    { id: 'ajustes', label: TEXTS.pricing.tabs.settings, path: '/precificacao/ajustes', icon: Sliders },
-    { id: 'produtos', label: TEXTS.pricing.tabs.products, path: '/precificacao/produtos', icon: Package },
-    { id: 'servicos', label: TEXTS.pricing.tabs.services, path: '/precificacao/servicos', icon: Landmark }
+    { id: 'ajustes', label: TEXTS.pricing.tabs.settings, path: ROUTE_PATHS.pricingSettings, icon: Sliders },
+    { id: 'produtos', label: TEXTS.pricing.tabs.products, path: ROUTE_PATHS.pricingProducts, icon: Package },
+    {
+      id: 'servicos',
+      label: TEXTS.pricing.tabs.services,
+      path: ROUTE_PATHS.pricingServices,
+      icon: Landmark,
+      disabled: !FEATURE_FLAGS.modules.pricingServices,
+      badge: FEATURE_FLAGS.modules.pricingServices ? undefined : SYSTEM_TEXTS.navigation.plannedBadge
+    }
   ];
 
   return (

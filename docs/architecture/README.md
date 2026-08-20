@@ -1,41 +1,61 @@
-# Fundação SaaS e operacional
+# Arquitetura do ERP Datwork
 
-Status: **proposta para aprovação**. Esta documentação foi preparada sobre a branch `refactor/products-stage-1`, no commit `009185c`, e não autoriza implementação automática.
-
-## Objetivo e limites
-
-Definir uma fundação implementável para transformar o ERP local em um SaaS multiempresa, migrar o banco para PostgreSQL e operar a primeira implantação em VPS com segurança e recuperação verificável.
-
-Ficam fora desta etapa: alterar o schema Prisma, criar migrations, instalar dependências, mudar código, configurar a VPS ou transferir dados. Cada execução futura deverá ter task, revisão e plano de rollback próprios.
+Status: **arquitetura alvo proposta**; inventário do estado atual baseado no repositório em 20/08/2026.
 
 ## Estado observado
 
-- O frontend é React/Vite e já usa `/api` no build de produção; o backend é Express/Prisma.
-- O banco é SQLite, com 23 migrations ativas e 14 campos `Float` no schema.
-- Ainda não existem `Organization`, `User`, `Membership`, `Role`, `Permission` ou sessões persistidas.
-- O login do frontend é simulado. O backend permite bypass somente em desenvolvimento e falha fechado em produção.
-- `/health` confirma apenas que o processo responde; não há readiness do banco ou da versão de migrations.
-- Uploads ficam no disco local sob `default_user`, sem metadados persistidos nem separação por empresa.
-- A cópia local ignorada `backend/dev.db` passou em `integrity_check`, mas apresentou 58 violações de chave estrangeira: 4 em `recipes -> products` e 54 em `product_versions -> products`. Ela não deve ser considerada apta para migração até que a origem oficial seja escolhida e as violações sejam tratadas.
+| Região | Estado | Evidência/limite |
+| --- | --- | --- |
+| SPA | **Parcial** | React/Vite, rotas lazy, agenda, produtos, insumos, receitas, despesas e precificação |
+| API | **Parcial** | Express, controllers/services/contracts/presenters e middleware básico |
+| Banco | **Legado** | Prisma + SQLite, 23 migrations; valores financeiros ainda usam `Float` |
+| Login | **Parcial/simulado** | tela existe; backend fecha produção e permite bypass apenas em desenvolvimento |
+| SaaS multiempresa | **Proposto** | sem Organization/User/Membership/RBAC/RLS implementados |
+| Assíncrono/integrações | **Proposto** | sem outbox, fila/worker e webhook produtivo observados |
+| Operação | **Proposto** | sem VPS/TLS/readiness/backup externo/restore drill implementados |
+| UI system | **Parcial** | i18n pt-BR, config, theme, chaves de UI e componentes universais; padronização incompleta |
 
-## Documentos
+## Alvo arquitetural
 
-- [Tenancy e RBAC](./tenancy-and-rbac.md): modelo organizacional, autorização e isolamento obrigatório.
-- [Autenticação e sessões](./authentication-and-sessions.md): login, cookies, CSRF, recuperação de senha e revogação.
-- [Migração para PostgreSQL](./postgresql-migration.md): baseline, transferência, validação e política Decimal.
-- [Operação na VPS](./vps-operations.md): TLS, processo, readiness, backups, observabilidade e uploads.
-- [Fases, riscos e aprovações](./rollout-decisions-and-risks.md): dependências, gates e decisões do proprietário.
+Adotar monólito modular antes de microserviços. Fronteiras por domínio, contratos explícitos e outbox permitem extração futura quando escala/equipe/isolamento justificarem.
 
-## Princípios que funcionam como gates
+```mermaid
+flowchart TB
+  UI["Web/PWA responsiva"] --> API["API /api/v1"]
+  API --> SEC["Sessão + CSRF + TenantContext + RBAC"]
+  SEC --> MOD["Módulos de aplicação"]
+  MOD --> DB["Repositories → PostgreSQL + RLS"]
+  MOD --> OUT["Outbox"]
+  OUT --> WORK["Workers"]
+  WORK --> EXT["Adapters: fiscal, pagamentos, n8n/WhatsApp, e-commerce, storage"]
+  MOD --> OBJ["Object storage privado"]
+  API --> OBS["Logs, métricas, traces e auditoria"]
+  WORK --> OBS
+```
 
-1. Nenhuma segunda empresa entra no sistema antes de o isolamento em aplicação, banco, testes e uploads estar ativo.
-2. Nenhuma troca de banco ocorre sem origem congelada, backup verificável, ensaio completo e reconciliação assinada.
-3. Nenhuma publicação externa ocorre sem autenticação real, TLS, readiness, backup externo e restauração ensaiada.
-4. Identidade, empresa e permissão são contextos validados pelo servidor; IDs enviados pelo cliente nunca concedem acesso.
-5. Valores decimais são strings nos contratos HTTP e aritmética financeira não usa `number`/IEEE-754.
-6. Migration de banco é etapa explícita do deploy; não roda automaticamente ao iniciar a aplicação.
-7. Um backup só é considerado válido depois de uma restauração automatizada e verificada.
+## Princípios-gate
 
-## Referências normativas
+1. Backend é autoridade; frontend otimiza UX.
+2. Tenant é obrigatório em dado de negócio, query, job, cache, upload e evento.
+3. Autorização é default-deny e resource-aware; RLS contém falhas de aplicação.
+4. Decimal e fórmula versionada protegem precisão/histórico.
+5. Side effect confiável usa outbox/idempotência, não HTTP escondido em transação.
+6. Integrações são adapters substituíveis e reconciliáveis.
+7. Deploy não executa migration implicitamente; backup só vale após restore testado.
+8. Mobile e desktop oferecem a mesma tarefa essencial com apresentação adequada.
 
-As decisões de segurança seguem as recomendações atuais da [OWASP para aplicações multi-tenant](https://cheatsheetseries.owasp.org/cheatsheets/Multi_Tenant_Security_Cheat_Sheet.html), [gerenciamento de sessões](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html) e [autorização](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html). As decisões de banco consideram a documentação oficial do PostgreSQL sobre [Row-Level Security](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) e [recuperação point-in-time](https://www.postgresql.org/docs/current/continuous-archiving.html).
+## Mapas especializados
+
+- [Contexto](./system-context.md) e [domínios](./domain-map.md)
+- [Frontend](./frontend.md), [backend](./backend.md) e [dados](./data.md)
+- [Contratos/eventos](./contracts-and-events.md) e [integrações](./integrations-and-webhooks.md)
+- [Tenancy/RBAC](./tenancy-and-rbac.md) e [auth/sessões](./authentication-and-sessions.md)
+- [Observabilidade](./observability.md), [VPS/recuperação](./vps-operations.md) e [migração](./postgresql-migration.md)
+- [UX responsiva](./ux-responsive.md) e [ADRs](./decisions/README.md)
+
+## Gates de produção
+
+- Nenhuma segunda empresa antes de TenantContext, testes cross-tenant, RLS e isolamento de arquivos/cache/jobs.
+- Nenhuma operação financeira produtiva antes de Decimal, reconciliação e fórmula versionada.
+- Nenhuma exposição pública antes de auth real, TLS, secrets, readiness, observabilidade e restore comprovado.
+- Nenhuma integração crítica antes de contrato, idempotência, assinatura/webhook, retry/DLQ e conciliação.

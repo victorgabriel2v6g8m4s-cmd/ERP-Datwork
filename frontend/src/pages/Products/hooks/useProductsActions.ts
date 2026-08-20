@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { TEXTS } from '../../../i18n/index.ts';
 import { type Product } from '../../../types/product.ts';
 import { useGridGestures } from '../../../hooks/useGridGestures.ts';
+import { useLoadState } from '../../../hooks/useLoadState.ts';
+import { SYSTEM_TEXTS } from '../../../i18n/system.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import {
     productsService,
@@ -28,22 +30,29 @@ function getProductApiErrorMessage(error: unknown, fallback: string): string {
 export function useProductsActions() {
     const [products, setProducts] = useState<Product[]>([]);
     const [orderProfiles, setOrderProfiles] = useState<ProductOrderProfile[]>([]);
-    const [loading, setLoading] = useState(true);
+    const {
+        isLoading,
+        errorMessage,
+        beginLoading,
+        markLoaded,
+        markFailed
+    } = useLoadState();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const fetchProducts = useCallback(async () => {
+        beginLoading();
         CustomLogger.info('[Products] Loading product catalog');
 
         try {
             const data = await productsService.list();
             setProducts([...data].sort((a, b) => a.position - b.position));
+            markLoaded();
             CustomLogger.info(`[Products] Product catalog loaded with ${data.length} records`);
         } catch (error) {
             CustomLogger.error('[Products] Failed to load product catalog', error);
-        } finally {
-            setLoading(false);
+            markFailed(SYSTEM_TEXTS.feedback.productsLoadError);
         }
-    }, []);
+    }, [beginLoading, markFailed, markLoaded]);
 
     const fetchOrderProfiles = useCallback(async () => {
         CustomLogger.info('[Products] Loading custom order profiles');
@@ -163,7 +172,8 @@ export function useProductsActions() {
         products,
         setProducts,
         orderProfiles,
-        loading,
+        loading: isLoading,
+        loadError: errorMessage,
         isCreateModalOpen,
         setIsCreateModalOpen,
         isEditModalOpen,
