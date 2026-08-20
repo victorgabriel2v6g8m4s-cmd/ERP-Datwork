@@ -9,8 +9,12 @@ import {
     UniversalHeaderDashboard,
     GlobalTopTabs,
     GlobalFooterNav,
-    UniversalRowItem
+    UniversalRowItem,
+    AsyncCollectionState
 } from '../../components/index.ts';
+import { ROUTE_PATHS } from '../../config/routes.config.ts';
+import { SYSTEM_TEXTS } from '../../i18n/system.ts';
+import { SYSTEM_THEME } from '../../theme/system.ts';
 
 import { CreateProductModal } from './components/CreateProductModal.tsx';
 import { EditProductModal } from './components/EditProductModal.tsx';
@@ -49,16 +53,16 @@ export function ProductsPage() {
     };
 
     return (
-        <div className="w-full min-h-screen bg-slate-50/50 pb-24 font-sans selection:bg-indigo-500/10 select-none">
+        <div className={SYSTEM_THEME.catalog.shell}>
             <UniversalHeaderDashboard
-                title="Gestão de Produtos"
-                subtitle="Catálogo Comercial & Insumos"
+                title={SYSTEM_TEXTS.products.title}
+                subtitle={SYSTEM_TEXTS.products.subtitle}
                 icon={Package}
-                backPath="/home"
+                backPath={ROUTE_PATHS.home}
                 kpiCards={[
                     {
-                        label: 'Itens Ativos',
-                        value: `${filters.activeProductsCount} un.`,
+                        label: SYSTEM_TEXTS.products.activeItems,
+                        value: `${filters.activeProductsCount} ${SYSTEM_TEXTS.products.unitSuffix}`,
                         icon: Package,
                         valueColorClass: 'text-indigo-600'
                     }
@@ -67,14 +71,14 @@ export function ProductsPage() {
                     {
                         icon: SlidersHorizontal,
                         onClick: () => { },
-                        title: 'Configurações de exibição da grade'
+                        title: SYSTEM_TEXTS.products.gridSettings
                     }
                 ]}
             />
 
             <GlobalTopTabs />
 
-            <main className="w-full px-6 mx-auto mt-6 space-y-4">
+            <main className={SYSTEM_THEME.catalog.main}>
                 <UniversalSearchBar
                     type="products"
                     filters={filters.activeFilters}
@@ -83,16 +87,20 @@ export function ProductsPage() {
                     onSaveNewProfile={actionsState.handleSaveNewOrderProfile}
                     onRenameProfile={actionsState.handleRenameOrderProfile}
                     onDeleteProfile={handleDeleteOrderProfile}
+                    placeholder={SYSTEM_TEXTS.products.searchPlaceholder}
                     onSelectProfilePositions={(positions: ProductOrderPosition[]) =>
                         actionsState.setProducts(filters.applyProfilePositions(positions))
                     }
                 />
 
-                {actionsState.loading ? (
-                    <div className="flex justify-center items-center py-20">
-                        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                ) : (
+                <AsyncCollectionState
+                    isLoading={actionsState.loading}
+                    errorMessage={actionsState.loadError}
+                    isEmpty={filters.filteredProducts.length === 0}
+                    onRetry={() => void fetchProducts()}
+                    emptyTitle={SYSTEM_TEXTS.products.emptyTitle}
+                    emptyDescription={SYSTEM_TEXTS.products.emptyDescription}
+                >
                     <DragDropContext onDragEnd={handleDragEnd}>
                         <Droppable droppableId="products-table-body">
                             {(provided) => (
@@ -120,14 +128,15 @@ export function ProductsPage() {
                             )}
                         </Droppable>
                     </DragDropContext>
-                )}
+                </AsyncCollectionState>
             </main>
 
             <button
                 type="button"
                 onClick={() => actionsState.setIsCreateModalOpen(true)}
-                className="fixed bottom-20 right-6 z-40 flex items-center justify-center w-12 h-12 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-indigo-500/20"
-                title="Cadastrar Novo Produto"
+                className={SYSTEM_THEME.catalog.createFab}
+                title={SYSTEM_TEXTS.products.createAction}
+                aria-label={SYSTEM_TEXTS.products.createAction}
             >
                 <PackagePlus className="w-5 h-5" />
             </button>

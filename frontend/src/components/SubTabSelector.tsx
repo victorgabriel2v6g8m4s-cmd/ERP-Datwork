@@ -6,6 +6,8 @@ interface SubTabItem {
     label: string;
     path: string;
     icon?: LucideIcon;
+    disabled?: boolean;
+    badge?: string;
 }
 
 interface SubTabSelectorProps {
@@ -26,12 +28,15 @@ export function SubTabSelector({ tabs, activeTabId }: SubTabSelectorProps) {
                     <button
                         key={tab.id}
                         type="button"
+                        disabled={tab.disabled}
                         onClick={() => navigate(tab.path)}
-                        className={`flex-1 py-2 text-center rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${isActive ? 'bg-white text-slate-900 shadow-3xs font-black' : 'text-slate-500 hover:text-slate-800'
+                        aria-current={isActive ? 'page' : undefined}
+                        className={`flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-center transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 ${tab.disabled ? 'cursor-not-allowed text-slate-400 opacity-70' : 'cursor-pointer'} ${isActive ? 'bg-white text-slate-900 shadow-3xs font-black' : 'text-slate-500 hover:text-slate-800'
                             }`}
                     >
                         {Icon && <Icon className="w-3.5 h-3.5 opacity-80" />}
                         <span>{tab.label}</span>
+                        {tab.badge && <span className="text-[8px] font-black uppercase text-amber-700">{tab.badge}</span>}
                     </button>
                 );
             })}

@@ -3,6 +3,8 @@ import type { DropResult } from '@hello-pangea/dnd';
 import type { Recipe } from '../../../types/recipe.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import { TEXTS } from '../../../i18n/index.ts';
+import { SYSTEM_TEXTS } from '../../../i18n/system.ts';
+import { useLoadState } from '../../../hooks/useLoadState.ts';
 import { recipesService } from '../services/recipes.service.ts';
 import type { CreateRecipePayload, RecipeMutationPayload } from '../types/recipe-form.types.ts';
 import { reorderVisibleRecipes } from '../utils/recipeOrder.ts';
@@ -18,7 +20,13 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 
 export function useRecipesActions() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    isLoading,
+    errorMessage,
+    beginLoading,
+    markLoaded,
+    markFailed
+  } = useLoadState();
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [statusRecipe, setStatusRecipe] = useState<Recipe | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -26,18 +34,19 @@ export function useRecipesActions() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   const fetchRecipes = useCallback(async () => {
+    beginLoading();
     CustomLogger.info('[Recipes] Loading recipe catalog');
 
     try {
       const data = await recipesService.list();
       setRecipes([...data].sort((a, b) => a.position - b.position));
+      markLoaded();
       CustomLogger.info(`[Recipes] Recipe catalog loaded with ${data.length} records`);
     } catch (error) {
       CustomLogger.error('[Recipes] Failed to load recipe catalog', error);
-    } finally {
-      setLoading(false);
+      markFailed(SYSTEM_TEXTS.feedback.recipesLoadError);
     }
-  }, []);
+  }, [beginLoading, markFailed, markLoaded]);
 
   const createRecipe = useCallback(async (payload: CreateRecipePayload) => {
     CustomLogger.info('[Recipes] Creating recipe', { productId: payload.productId });
@@ -145,7 +154,8 @@ export function useRecipesActions() {
 
   return {
     recipes,
-    loading,
+    loading: isLoading,
+    loadError: errorMessage,
     selectedRecipe,
     statusRecipe,
     isCreateModalOpen,

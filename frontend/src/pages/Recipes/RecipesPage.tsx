@@ -4,6 +4,7 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import {
   GlobalFooterNav,
   GlobalTopTabs,
+  AsyncCollectionState,
   UniversalHeaderDashboard,
   UniversalSearchBar
 } from '../../components/index.ts';
@@ -64,11 +65,14 @@ export function RecipesPage() {
           />
         </div>
 
-        {actions.loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : (
+        <AsyncCollectionState
+          isLoading={actions.loading}
+          errorMessage={actions.loadError}
+          isEmpty={filters.filteredRecipes.length === 0}
+          onRetry={() => void fetchRecipes()}
+          emptyTitle={TEXTS.recipes.page.emptyState}
+          emptyDescription={TEXTS.recipes.page.subtitle}
+        >
           <DragDropContext
             onDragEnd={(result) => actions.handleDragEnd(
               result,
@@ -96,14 +100,11 @@ export function RecipesPage() {
                   ))}
                   {provided.placeholder}
 
-                  {filters.filteredRecipes.length === 0 && (
-                    <div className={ERP_THEME.recipes.page.emptyState}>{TEXTS.recipes.page.emptyState}</div>
-                  )}
                 </div>
               )}
             </Droppable>
           </DragDropContext>
-        )}
+        </AsyncCollectionState>
       </main>
 
       <button

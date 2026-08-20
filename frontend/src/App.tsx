@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import { PageErrorBoundary } from './components/PageErrorBoundary.tsx';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { ModuleUnavailableState, PageErrorBoundary } from './components/index.ts';
+import { ROUTE_PATHS } from './config/routes.config.ts';
 import { TEXTS } from './i18n/index.ts';
 import { ERP_THEME } from './theme/presets.ts';
 import { UI_KEYS } from './ui/keys.ts';
@@ -15,10 +16,6 @@ const IngredientsPage = lazy(() => import('./pages/Ingredients/IngredientsPage.t
 const RecipesPage = lazy(() => import('./pages/Recipes/RecipesPage.tsx').then((module) => ({ default: module.RecipesPage })));
 const ExpensesPage = lazy(() => import('./pages/Expenses/ExpensesPage.tsx').then((module) => ({ default: module.ExpensesPage })));
 const PricingPage = lazy(() => import('./pages/Pricing/PricingPage.tsx').then((module) => ({ default: module.PricingPage })));
-
-function PrivateRoute() {
-  return <Outlet />;
-}
 
 function RouteLoading() {
   return (
@@ -35,26 +32,22 @@ function PageRoutes() {
     <PageErrorBoundary key={location.key}>
       <Suspense fallback={<RouteLoading />}>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-
-          <Route element={<PrivateRoute />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/agenda" element={<AgendaPage />} />
-            <Route path="/agenda/settings" element={<AgendaSettingsPage />} />
-            <Route path="/dashboard" element={<div className="p-8 font-bold">Módulo Dashboard em construção...</div>} />
-            <Route path="/dre" element={<div className="p-8 font-bold">Módulo DRE em construção...</div>} />
-            <Route path="/estoque" element={<div className="p-8 font-bold">Módulo Estoque em construção...</div>} />
-            <Route path="/insumos" element={<IngredientsPage />} />
-            <Route path="/produtos" element={<ProductsPage />} />
-            <Route path="/receitas" element={<RecipesPage />} />
-            <Route path="/despesas/:subtab" element={<ExpensesPage />} />
-            <Route path="/despesas" element={<Navigate to="/despesas/custos-fixos" replace />} />
-            <Route path="/precificacao/:subtab" element={<PricingPage />} />
-            <Route path="/precificacao" element={<Navigate to="/precificacao/produtos" replace />} />
-          </Route>
-
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path={ROUTE_PATHS.login} element={<LoginPage />} />
+          <Route path={ROUTE_PATHS.faq} element={<FAQPage />} />
+          <Route path={ROUTE_PATHS.home} element={<HomePage />} />
+          <Route path={ROUTE_PATHS.agenda} element={<AgendaPage />} />
+          <Route path={ROUTE_PATHS.agendaSettings} element={<AgendaSettingsPage />} />
+          <Route path={ROUTE_PATHS.dashboard} element={<ModuleUnavailableState moduleId="dashboard" />} />
+          <Route path={ROUTE_PATHS.dre} element={<ModuleUnavailableState moduleId="dre" />} />
+          <Route path={ROUTE_PATHS.inventory} element={<ModuleUnavailableState moduleId="inventory" />} />
+          <Route path={ROUTE_PATHS.ingredients} element={<IngredientsPage />} />
+          <Route path={ROUTE_PATHS.products} element={<ProductsPage />} />
+          <Route path={ROUTE_PATHS.recipes} element={<RecipesPage />} />
+          <Route path={`${ROUTE_PATHS.expenses}/:subtab`} element={<ExpensesPage />} />
+          <Route path={ROUTE_PATHS.expenses} element={<Navigate to={ROUTE_PATHS.expensesFixed} replace />} />
+          <Route path={`${ROUTE_PATHS.pricing}/:subtab`} element={<PricingPage />} />
+          <Route path={ROUTE_PATHS.pricing} element={<Navigate to={ROUTE_PATHS.pricingProducts} replace />} />
+          <Route path="*" element={<Navigate to={ROUTE_PATHS.login} replace />} />
         </Routes>
       </Suspense>
     </PageErrorBoundary>

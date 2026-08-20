@@ -3,6 +3,7 @@ import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import {
   GlobalFooterNav,
   GlobalTopTabs,
+  AsyncCollectionState,
   UniversalGridTable,
   UniversalHeaderDashboard,
   UniversalRowItem,
@@ -80,13 +81,14 @@ export function IngredientsPage() {
           />
         </div>
 
-        {actions.loading ? (
-          <div className={ERP_THEME.ingredients.page.loading}>
-            <div className={ERP_THEME.ingredients.page.spinner} aria-label={TEXTS.ingredients.page.loading} />
-          </div>
-        ) : filters.filteredIngredients.length === 0 ? (
-          <div className={ERP_THEME.ingredients.page.empty}>{TEXTS.ingredients.page.emptyState}</div>
-        ) : (
+        <AsyncCollectionState
+          isLoading={actions.loading}
+          errorMessage={actions.loadError}
+          isEmpty={filters.filteredIngredients.length === 0}
+          onRetry={() => void actions.fetchIngredients()}
+          emptyTitle={TEXTS.ingredients.page.emptyState}
+          emptyDescription={TEXTS.ingredients.page.subtitle}
+        >
           <DragDropContext onDragEnd={(result) => void actions.handleDragEnd(result, filters.filteredIngredients)}>
             <Droppable droppableId="ingredients-table-body">
               {(provided) => (
@@ -117,7 +119,7 @@ export function IngredientsPage() {
               )}
             </Droppable>
           </DragDropContext>
-        )}
+        </AsyncCollectionState>
       </main>
 
       <button
@@ -125,6 +127,7 @@ export function IngredientsPage() {
         onClick={() => actions.setIsCreateModalOpen(true)}
         className={ERP_THEME.ingredients.page.createFab}
         title={TEXTS.ingredients.page.createActionTitle}
+        aria-label={TEXTS.ingredients.page.createActionTitle}
         data-ui-key={UI_KEYS.ingredients.createAction}
       >
         <PackagePlus className="w-5 h-5" />

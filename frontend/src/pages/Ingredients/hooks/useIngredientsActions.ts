@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DropResult } from '@hello-pangea/dnd';
 import { TEXTS } from '../../../i18n/index.ts';
+import { SYSTEM_TEXTS } from '../../../i18n/system.ts';
+import { useLoadState } from '../../../hooks/useLoadState.ts';
 import type { Ingredient } from '../../../types/ingredient.ts';
 import { CustomLogger } from '../../../utils/CustomLogger.ts';
 import { ingredientsService } from '../services/ingredients.service.ts';
@@ -11,21 +13,29 @@ import { parseIngredientOrderPositions } from '../utils/ingredientContract.ts';
 export function useIngredientsActions() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [orderProfiles, setOrderProfiles] = useState<IngredientOrderProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    isLoading,
+    errorMessage,
+    beginLoading,
+    markLoaded,
+    markFailed
+  } = useLoadState();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
 
   const fetchIngredients = useCallback(async () => {
+    beginLoading();
     try {
       const data = await ingredientsService.list();
-      setIngredients(data.sort((a, b) => a.position - b.position));
+      setIngredients([...data].sort((a, b) => a.position - b.position));
+      markLoaded();
     } catch (error) {
       CustomLogger.error('[Ingredients] Failed to load catalog', error);
-      window.alert(TEXTS.ingredients.errors.load);
+      markFailed(SYSTEM_TEXTS.feedback.ingredientsLoadError);
     }
-  }, []);
+  }, [beginLoading, markFailed, markLoaded]);
 
   const fetchOrderProfiles = useCallback(async () => {
     try {
@@ -37,16 +47,8 @@ export function useIngredientsActions() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    setLoading(true);
-
-    void Promise.allSettled([fetchIngredients(), fetchOrderProfiles()]).finally(() => {
-      if (active) setLoading(false);
-    });
-
-    return () => {
-      active = false;
-    };
+    void fetchIngredients();
+    void fetchOrderProfiles();
   }, [fetchIngredients, fetchOrderProfiles]);
 
   const handleCreateIngredient = async (payload: IngredientMutationPayload) => {
@@ -148,7 +150,8 @@ export function useIngredientsActions() {
   return {
     ingredients,
     orderProfiles,
-    loading,
+    loading: isLoading,
+    loadError: errorMessage,
     isCreateModalOpen,
     setIsCreateModalOpen,
     isEditModalOpen,
@@ -157,6 +160,7 @@ export function useIngredientsActions() {
     setIsViewModalOpen,
     selectedIngredient,
     setSelectedIngredient,
+    fetchIngredients,
     handleCreateIngredient,
     handleUpdateIngredient,
     handleToggleStatus,

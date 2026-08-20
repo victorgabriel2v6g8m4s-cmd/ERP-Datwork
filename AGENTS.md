@@ -1,132 +1,89 @@
-# ERP Datwork — Regras de Desenvolvimento
+# AGENTS — ERP Datwork
 
-Este Project representa o desenvolvimento contínuo do ERP Datwork.
+## Precedência obrigatória
 
-## CONCEITO
+1. Leia integralmente [`REGRAS.md`](./REGRAS.md) antes de criar, alterar, revisar ou testar qualquer arquivo.
+2. Aplique este arquivo na raiz e o `AGENTS.md` mais próximo do arquivo em trabalho.
+3. Consulte [`docs/README.md`](./docs/README.md) para distinguir estado existente, alvo, proposta e bloqueio.
+4. Em conflito, segurança, integridade dos dados e decisão humana registrada prevalecem sobre conveniência.
 
-* Este é um ERP destinado a ser o maior e mais completo ERP do mercado atual. Ele deve atender todas as empresas desde o menor porte até a escala industrial multinacional.
-* Por enquanto o projeto está completamente local e conta apenas com um repositório no github, mas embreve será hospedado em um VPS na Hostinger.
-* durante o desenvolvimento deste ERP, vamos criar ferramentas que facilitem o nosso próprio desenvolvimento, como um editor de frontend que permite que editamos a estilização de cada componente da página diretamente pelo navegador, um gerenciador de operações matemáticas onde podemos inserir, visualizar, testar e editar fórmulas matemáticas que o ERP utiliza no processamento, e outras features que acharmos necessárias para a otimização do tempo de desenvolvimento.
+## Missão
 
-## Features
+Evoluir o ERP Datwork de aplicação local para um ERP SaaS modular, multiempresa e auditável, capaz de atender o Carro Chefe sem acoplar o produto a um único cliente. A ambição de ampliar o mercado é direção de produto, não evidência de capacidade implementada.
 
-A estrutura vai contar com os seguintes serviços e seus componentes:
-* Engenharia de produtos e precificação
-* Planejamento de Necessidades
-* Chão de Fábrica (MES)
-* Controle de Qualidade
-* Gestão Comercial
-* Controle de estoque
-* Gestão de Compras
-* Recebimento de Mercadorias
-* Gerenciamento de insumos
-* Agendamento de serviços e tarefas
-* Gestão financeira e contábil
-* Contas a Pagar e a Receber
-* Gestão Fiscal e Tributária
-* Gestão de Ativos Fixos
-* DRE
-* Dashboards e BI com dados analíticos de ponta
-* Inteligência Artificial e Analytics
-* Gestão de equipe e departamentos
-* Chat integrado
-* Planejamento de ação
-* PDV 100% personalizável.
-* Processamento de Pedidos
-* CRM Integrado
-* Portal do Cliente/E-commerce
-* Folha de Pagamento
-* Ponto Eletrônico
-* Gestão de Talentos
-* Gestão de Fretes
-* Rastreamento de Carga
-* Segurança e Auditoria (LGPD)
-* n8n vinculado ao whatsapp para atender clientes, fazer agendamentos, entrar em contato com a equipe, fazer lembretes, cadastrar e editar itens.
+## Status documental
 
-## Arquitetura e manutenção
+Use **Implementado**, **Parcial**, **Proposto**, **Bloqueado** ou **Legado**. Não declare como pronto o que aparece apenas no roadmap, em placeholder ou em documentação.
 
-* Manter o projeto altamente modular, DRY e reutilizável.
-* Evitar arquivos grandes e difíceis de entender.
-* Preferir criar arquivos adicionais pequenos e especializados a concentrar muitas responsabilidades em um único arquivo.
-* Cada responsabilidade deve possuir um ponto central/orquestrador, delegando detalhes para services, hooks, utils, contracts, presenters e componentes menores.
-* Antes de criar uma solução nova, verificar se já existe componente, hook, service, utilitário ou padrão reutilizável no projeto.
+## Arquitetura observada e alvo
 
-## Frontend
+```text
+Implementado/parcial: React + Vite → Express → Prisma → SQLite local
 
-Utilizar os padrões já estabelecidos:
+Alvo SaaS: Web/PWA → API versionada
+  → autenticação + TenantContext + RBAC
+    → casos de uso por domínio
+      → repositories/adapters → PostgreSQL + object storage
+      → outbox → workers → integrações/webhooks
+```
 
-* `TEXTS` para textos e conteúdo visível ao usuário.
-* `APP_CONFIG` para valores operacionais e configuráveis.
-* `ERP_THEME` para tokens e estilos semânticos.
-* `UI_KEYS` + `data-ui-key` para identidade estável dos elementos da interface e preparação do futuro editor visual.
-* Services devem ser a fronteira HTTP dos módulos.
-* Componentes visuais e hooks de UI não devem importar `api/client` diretamente.
-* Respostas externas devem possuir contratos runtime quando apropriado.
-* Reutilizar componentes globais em vez de reimplementar comportamentos equivalentes.
+Módulos observados: agenda, produtos, insumos, receitas, despesas e precificação. Autenticação real, tenancy/RBAC, PostgreSQL, filas/outbox, integrações de produção, fiscal, contábil, PDV e demais domínios do roadmap não podem ser tratados como implementados.
 
-## Backend
+## Limites globais
 
-* Controllers devem permanecer finos.
-* Validação HTTP deve ocorrer em validators/contracts próprios.
-* Services devem concentrar regras de negócio.
-* Presenters devem definir contratos públicos explícitos.
-* Evitar `any`, casts inseguros e confiança direta em payloads recebidos.
-* Transações devem ser pequenas e determinísticas.
-* Operações externas ou recálculos pesados não devem permanecer dentro de transações quando não forem necessários para atomicidade.
+- Backend é autoridade para autenticação, autorização, regras, fórmulas e integridade.
+- Frontend não acessa Prisma, não decide permissão e não duplica cálculo financeiro canônico.
+- Controllers são finos; casos de uso não conhecem Express; domínio não depende de UI ou provider.
+- Persistência é isolada por repositories/adapters. Controller não acessa ORM/SQL diretamente.
+- Entidade de negócio SaaS é tenant-owned, salvo allowlist global documentada.
+- Dinheiro, custo, quantidade e percentuais seguem Decimal; não usar `Float`/`number` em novos contratos financeiros.
+- Integração externa usa adapter, timeout, idempotência, retry limitado e observabilidade.
+- Evento confiável sai por outbox; webhook valida assinatura, replay e idempotência.
+- Segredos, credenciais, bancos locais, uploads e dados pessoais não entram no Git.
 
-## Logging
+## Papéis e veto
 
-* Utilizar `CustomLogger`.
-* Criar logs suficientes para localizar rapidamente bugs e falhas.
-* Evitar `console.log`, `console.warn` e `console.error`.
-* Evitar logging excessivo dentro de loops ou caminhos executados para cada item.
+- **Gestão/Produto** prioriza e registra decisões; não substitui revisão técnica.
+- **Arquitetura** define fronteiras e contratos; não transforma proposta em implementação.
+- **Development** é o único papel que altera código e executa gates.
+- **Security/Sanitization** revisa auth, authz, tenant, inputs, uploads, logs e abuso; pode vetar.
+- **Database** revisa schema, Decimal, constraints, índices, migrations e recuperação; integridade pode vetar.
+- **API/Integration** mantém DTOs, compatibilidade, idempotência e adapters.
+- **Testing** cobre comportamento, falha, regressão, permissão e isolamento.
+- **Performance/Observability** mede hot paths e garante diagnóstico sem sacrificar correção.
+- **UI/UX** assegura clareza, acessibilidade e equivalência mobile/desktop.
+- **Documentation** mantém mapas, ADRs, status e runbooks alinhados ao código.
 
-## Segurança
+## Fluxo obrigatório
 
-* Segurança é prioridade.
-* Validar dados recebidos pelo backend.
-* Não confiar no cliente para IDs, enums, números, snapshots ou regras de negócio.
-* Utilizar allowlists e contratos explícitos.
-* Evitar alterações que ampliem superfície de ataque sem necessidade.
+1. Ler `REGRAS.md`, os `AGENTS.md` aplicáveis e o índice de arquitetura.
+2. Identificar status, requisito, owner, dependências, aceite, riscos e autorização.
+3. Mapear fluxo ponta a ponta e procurar contratos/componentes reutilizáveis.
+4. Implementar mudança pequena na camada dona; atualizar testes e documentação.
+5. Validar segurança, tenant, banco, desempenho, UX e observabilidade proporcionais ao risco.
+6. Executar gates regionais, revisar diff e relatar evidência, falha e próximo passo.
 
-## Performance
+## Gates mínimos
 
-* Performance e velocidade do sistema são prioridade.
-* Evitar requisições HTTP redundantes.
-* Evitar refetch desnecessário após mutations quando a resposta canônica puder atualizar o estado.
-* Evitar processamento repetitivo por item em renders.
-* Considerar code splitting e lazy loading para páginas/módulos quando apropriado.
+- Frontend: `npm test`, `npm run typecheck`, `npm run lint`, `npm run build:bundle`.
+- Backend: migrations em banco temporário quando afetadas, `prisma generate`, `npm test`, `npm run build`.
+- Persistência: migration do zero, constraints/índices e teste cross-tenant quando aplicável.
+- UI: desktop/mobile, teclado, foco, contraste, loading, vazio, erro, sucesso e duplo envio.
+- Feature crítica: autorização, IDOR/cross-tenant, input inválido, duplicação/idempotência e falha externa.
 
-## Banco de dados
+Etapa não aplicável exige justificativa no relatório.
 
-* Não criar migrations ou alterar schema sem necessidade real.
-* Toda migration deve ser validada do zero pelo CI.
-* Preservar dados existentes e compatibilidade sempre que possível.
+## Git e ações externas
 
-## Git
+- Branch por entrega, commits coerentes e `main` apenas para integração.
+- Sem force push ou reescrita de histórico compartilhado.
+- Migration destrutiva, deploy, DNS, contratação, compra, publicação, preço final e tratamento externo de dados pessoais exigem autorização humana explícita.
+- Preserve mudanças alheias; um único owner de escrita por arquivo em cada entrega.
 
-* Trabalhar na branch de desenvolvimento atual, nunca diretamente em `main` sem autorização explícita.
-* Antes de publicar alterações, verificar HEAD e garantir fast-forward.
-* Commits devem representar mudanças coerentes.
-* Não abrir PR nem fazer merge em `main` sem autorização explícita.
+## Índices
 
-## Qualidade
-
-Para cada módulo refatorado:
-
-* criar ou manter typecheck específico quando fizer sentido;
-* adicionar testes para bugs corrigidos e contratos importantes;
-* manter o TypeScript global verde;
-* validar frontend e backend;
-* revisar o diff antes de publicar;
-* não esconder warnings importantes simplesmente aumentando limites ou desativando regras.
-
-## Direção arquitetural futura
-
-O ERP está sendo preparado para um editor visual no navegador.
-
-A arquitetura deve permitir futuramente:
-
-`elemento DOM → data-ui-key → texto/tema/configuração → override persistido`
-
-Portanto, ao refatorar páginas, centralizar de forma semântica as superfícies visuais e configuráveis importantes, sem transformar cada pequena classe CSS em configuração global.
+- [Documentação](./docs/README.md)
+- [Arquitetura](./docs/architecture/README.md)
+- [Roadmap](./docs/roadmap.md)
+- [Fit-gap Carro Chefe](./docs/product/carro-chefe-fit-gap.md)
+- [ADRs](./docs/architecture/decisions/README.md)

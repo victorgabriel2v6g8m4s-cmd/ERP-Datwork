@@ -4,8 +4,9 @@ import { access, rm } from 'node:fs/promises';
 
 process.env.DATABASE_URL ??= 'file:./ci-test.db';
 process.env.NODE_ENV = 'production';
+process.env.HOST = '127.0.0.1';
 process.env.ALLOWED_ORIGINS = 'https://erp.example.test';
-process.env.ALLOW_INSECURE_AUTH_BYPASS = 'true';
+process.env.ALLOW_INSECURE_AUTH_BYPASS = 'false';
 
 const databasePath = new URL('../ci-test.db', import.meta.url);
 
